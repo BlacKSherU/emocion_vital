@@ -1,42 +1,11 @@
 .u-section-1 .u-sheet-1 {
-  min-height: 155px;
-}
-
-.u-section-1 .u-icon-1 {
-  width: 64px;
-  height: 64px;
-  margin: 27px auto 0 53px;
-}
-
-.u-section-1 .u-text-1 {
-  margin: -53px auto 0 213px;
-}
-
-.u-section-1 .u-btn-1 {
-  margin: 19px auto 3px 0;
-}
-
-@media (max-width: 767px) {
-  .u-section-1 .u-text-1 {
-    margin-bottom: 60px;
-    margin-left: 160px;
-  }
-}
-
-@media (max-width: 575px) {
-  .u-section-1 .u-text-1 {
-    margin-left: 101px;
-  }
+  min-height: 100px;
 }.u-section-2 .u-sheet-1 {
-  min-height: 613px;
+  min-height: 100vh;
 }
 
 .u-section-2 .u-form-1 {
-  height: 401px;
-  --thumb-color: #478ac9;
-  --thumb-hover-color: #77aad9;
-  --track-color: #c0c0c0;
-  --track-active-color: #478ac9;
+  height: 186px;
   --progress-spacing: 20px;
   --bar-size: 3px;
   --bar-default-color: #164a41;
@@ -49,22 +18,21 @@
   --step-icon-default-color: #164a41;
   --step-icon-done-color: #164a41;
   --step-icon-active-color: #164a41;
-  --step-icon-text-default-color: #ffffff;
-  --step-icon-text-done-color: #ffffff;
-  --step-icon-text-active-color: #ffffff;
+  --step-icon-text-default-color: #164a41;
+  --step-icon-text-done-color: #164a41;
+  --step-icon-text-active-color: #164a41;
   --step-text-default-color: #164a41;
   --step-text-done-color: #164a41;
   --step-text-active-color: #164a41;
-  width: 914px;
-  margin: 15px auto 60px;
+  width: 1064px;
+  margin: 17px auto 60px;
 }
 
 .u-section-2 .u-form-group-1 {
-  margin-left: 0;
   margin-top: 20px !important;
 }
 
-.u-section-2 .u-form-group-2 {
+.u-section-2 .u-form-group-3 {
   margin-left: 0;
 }
 
@@ -110,6 +78,20 @@
 
 .u-section-2 .u-form-group-14 {
   margin-left: 0;
+}
+
+.u-section-2 .u-form-group-15 {
+  margin-left: 0;
+}
+
+.u-section-2 .u-form-group-16 {
+  margin-left: 0;
+}
+
+@media (max-width: 1199px) {
+  .u-section-2 .u-form-1 {
+    width: 940px;
+  }
 }
 
 @media (max-width: 991px) {
