@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-verde">Panel Admin</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#psicologos">
+                                <i class="bi bi-people"></i> Gestión de Psicólogos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#pacientes">
+                                <i class="bi bi-person-lines-fill"></i> Gestión de Pacientes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#citas">
+                                <i class="bi bi-calendar-check"></i> Gestión de Citas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#reportes">
+                                <i class="bi bi-graph-up"></i> Reportes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#configuracion">
+                                <i class="bi bi-gear"></i> Configuración
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Contenido Principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Dashboard -->
+                <section id="dashboard" class="section-content">
+                    <h2 class="mb-4">Dashboard</h2>
+                    <div class="row">
+                        <div class="col-md-3 mb-4">
+                            <div class="card bg-verde-claro">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Psicólogos</h5>
+                                    <h2 class="card-text">12</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card bg-verde-claro">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pacientes Activos</h5>
+                                    <h2 class="card-text">156</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card bg-verde-claro">
+                                <div class="card-body">
+                                    <h5 class="card-title">Citas Hoy</h5>
+                                    <h2 class="card-text">24</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card bg-verde-claro">
+                                <div class="card-body">
+                                    <h5 class="card-title">Ingresos Mensuales</h5>
+                                    <h2 class="card-text">$12,500</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Gestión de Psicólogos -->
+                <section id="psicologos" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Gestión de Psicólogos</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>Agregar Psicólogo</h3>
+                            <form class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="psicologo-nombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="psicologo-nombre" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="psicologo-apellido" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="psicologo-apellido" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="psicologo-email" class="form-label">Correo Electrónico</label>
+                                    <input type="email" class="form-control" id="psicologo-email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="psicologo-cedula" class="form-label">Cédula Profesional</label>
+                                    <input type="text" class="form-control" id="psicologo-cedula" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="psicologo-especialidad" class="form-label">Especialidad</label>
+                                    <input type="text" class="form-control" id="psicologo-especialidad" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Agregar Psicólogo</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-8">
+                            <h3>Lista de Psicólogos</h3>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Cédula</th>
+                                            <th>Especialidad</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-psicologos">
+                                        <!-- Los psicólogos se cargarán dinámicamente aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Gestión de Pacientes -->
+                <section id="pacientes" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Gestión de Pacientes</h2>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Buscar paciente...">
+                                <button class="btn btn-primary">Buscar</button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Cédula</th>
+                                            <th>Teléfono</th>
+                                            <th>Psicólogo Asignado</th>
+                                            <th>Última Cita</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-pacientes">
+                                        <!-- Los pacientes se cargarán dinámicamente aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Gestión de Citas -->
+                <section id="citas" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Gestión de Citas</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Filtros</h5>
+                                    <form>
+                                        <div class="mb-3">
+                                            <label for="filtro-fecha" class="form-label">Fecha</label>
+                                            <input type="date" class="form-control" id="filtro-fecha">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="filtro-psicologo" class="form-label">Psicólogo</label>
+                                            <select class="form-select" id="filtro-psicologo">
+                                                <option value="">Todos</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="filtro-estado" class="form-label">Estado</label>
+                                            <select class="form-select" id="filtro-estado">
+                                                <option value="">Todos</option>
+                                                <option value="pendiente">Pendiente</option>
+                                                <option value="completada">Completada</option>
+                                                <option value="cancelada">Cancelada</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Hora</th>
+                                            <th>Paciente</th>
+                                            <th>Psicólogo</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-citas">
+                                        <!-- Las citas se cargarán dinámicamente aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reportes -->
+                <section id="reportes" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Reportes</h2>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Citas por Psicólogo</h5>
+                                    <canvas id="grafico-citas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Ingresos Mensuales</h5>
+                                    <canvas id="grafico-ingresos"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Exportar Reportes</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <select class="form-select">
+                                                <option value="">Seleccionar tipo de reporte...</option>
+                                                <option value="citas">Reporte de Citas</option>
+                                                <option value="ingresos">Reporte de Ingresos</option>
+                                                <option value="pacientes">Reporte de Pacientes</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="date" class="form-control" placeholder="Fecha inicio">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="date" class="form-control" placeholder="Fecha fin">
+                                        </div>
+                                        <div class="col-12">
+                                            <button class="btn btn-primary me-2">Exportar PDF</button>
+                                            <button class="btn btn-success">Exportar Excel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Configuración -->
+                <section id="configuracion" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Configuración</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Configuración General</h5>
+                                    <form>
+                                        <div class="mb-3">
+                                            <label for="nombre-clinica" class="form-label">Nombre de la Clínica</label>
+                                            <input type="text" class="form-control" id="nombre-clinica">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="direccion" class="form-label">Dirección</label>
+                                            <input type="text" class="form-control" id="direccion">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="telefono" class="form-label">Teléfono</label>
+                                            <input type="tel" class="form-control" id="telefono">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Correo Electrónico</label>
+                                            <input type="email" class="form-control" id="email">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Configuración de Horarios</h5>
+                                    <form>
+                                        <div class="mb-3">
+                                            <label class="form-label">Horario de Atención</label>
+                                            <div class="row g-2">
+                                                <div class="col-md-6">
+                                                    <input type="time" class="form-control" placeholder="Hora inicio">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <input type="time" class="form-control" placeholder="Hora fin">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Duración de Citas (minutos)</label>
+                                            <input type="number" class="form-control" value="60">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="admin-script.js"></script>
+</body>
+
+</html>

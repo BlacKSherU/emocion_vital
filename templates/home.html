@@ -37,7 +37,7 @@
 </li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-grey-5 u-text-hover-palette-2-base u-text-white" href="{% url 'consultas' %}" style="padding: 10px 91px;">consultas</a>
 </li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-grey-5 u-text-hover-palette-2-base u-text-white" href="{% url 'conoce' %}" style="padding: 10px 91px;">conoce a tu psicologa</a>
 </li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-grey-5 u-text-hover-palette-2-base u-text-white" href="{% url 'precios' %}" style="padding: 10px 91px;">precios</a>
-</li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-grey-5 u-text-hover-palette-2-base u-text-white" href="#" style="padding: 10px 91px;">inicia sesion</a>
+</li><li class="u-nav-item"><a class="u-button-style u-nav-link u-text-active-grey-5 u-text-hover-palette-2-base u-text-white" href="{% url 'login' %}" style="padding: 10px 91px;">inicia sesion</a>
 </li></ul>
           </div>
           <div class="u-custom-menu u-nav-container-collapse">
@@ -48,7 +48,7 @@
 </li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="{% url 'consultas' %}">consultas</a>
 </li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="{% url 'conoce' %}">conoce a tu psicologa</a>
 </li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="{% url 'precios' %}">precios</a>
-</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="#">inicia sesion</a>
+</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="{% url 'login' %}">inicia sesion</a>
 </li></ul>
               </div>
             </div>
@@ -59,48 +59,8 @@
     <section class="u-clearfix u-custom-color-7 u-section-1" id="carousel_c903">
       <div class="u-clearfix u-sheet u-sheet-1">
         <div class="data-layout-selected u-clearfix u-expanded-width u-gutter-0 u-layout-wrap u-layout-wrap-1">
-          <div class="u-layout">
-            <div class="u-layout-row">
-              <div class="u-align-left u-container-align-center u-container-align-left u-container-style u-layout-cell u-right-cell u-size-33 u-white u-layout-cell-1" data-animation-name="customAnimationIn" data-animation-duration="1500" data-animation-delay="500">
-                <div class="u-container-layout u-valign-middle u-container-layout-1">
-                  <h2 class="u-align-center u-text u-text-1" data-animation-name="" data-animation-duration="0" data-animation-delay="0" data-animation-direction="">Regístrate o inicia sesión </h2>
-                  <div class="u-expanded-width u-form u-form-1">
-                    <form action="{% url 'home' %}" method="post" class="u-clearfix u-form-spacing-15 u-form-vertical u-inner-form" style="padding: 0;"  name="form">
-                      {% csrf_token %}
-                      <div class="u-form-email u-form-group u-form-partition-factor-2">
-                        <label for="email-daf4" class="u-label">Email</label>
-                        <input type="email" placeholder="Enter a valid email address" id="email-daf4" name="email" class="u-border-2 u-border-black u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none" required="">
-                      </div>
-                      <div class="u-form-group u-form-name u-form-partition-factor-2">
-                        <label for="name-daf4" class="u-label">Name</label>
-                        <input type="text" placeholder="Enter your Name" id="name-daf4" name="name" class="u-border-2 u-border-black u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none" required="">
-                      </div>
-                      <div class="u-form-group u-form-phone u-form-group-3">
-                        <label for="phone-e738" class="u-label">Phone</label>
-                        <input type="tel" pattern="\+?\d{0,3}[\s\(\-]?([0-9]{2,3})[\s\)\-]?([\s\-]?)([0-9]{3})[\s\-]?([0-9]{2})[\s\-]?([0-9]{2})" placeholder="Enter your phone (e.g. +14155552675)" id="phone-e738" name="phone" class="u-border-2 u-border-black u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none" required="">
-                      </div>
-                      <div class="u-form-group u-form-message">
-                        <label for="message-daf4" class="u-label">Message</label>
-                        <textarea placeholder="" rows="4" cols="50" id="message-daf4" name="message" class="u-border-2 u-border-black u-border-no-left u-border-no-right u-border-no-top u-input u-input-rectangle u-none" required=""></textarea>
-                      </div>
-                      <div class="u-form-agree u-form-group u-form-group-5">
-                        <label class="u-field-label"></label>
-                        <input type="checkbox" id="agree-f183" name="agree" class="u-agree-checkbox u-field-input" required="">
-                        <label for="agree-f183" class="u-agree-label u-block-a1e3-32 u-field-label" style="">I accept the <a href="#">Terms of Service</a>
-                        </label>
-                      </div>
-                      <div class="u-align-left u-form-group u-form-submit">
-                        <a href="#" class="u-active-palette-1-light-2 u-border-none u-btn u-btn-round u-btn-submit u-button-style u-custom-color-4 u-hover-palette-1-light-2 u-radius u-btn-1">Submit</a>
-                        <input type="submit" value="submit" class="u-form-control-hidden">
-                      </div>
-                      <div class="u-form-send-message u-form-send-success">Gracias! Tu mensaje ha sido enviado.</div>
-                      <div class="u-form-send-error u-form-send-message">No se puede enviar su mensaje. Por favor, corrija los errores y vuelva a intentarlo.</div>
-                      <input type="hidden" value="" name="recaptchaResponse">
-                      <input type="hidden" name="formServices" value="c31da252-51c1-7477-acb8-7159f802f725">
-                    </form>
-                  </div>
-                </div>
-              </div>
+          
+              
               <div class="u-align-center u-container-align-center u-container-style u-layout-cell u-shape-rectangle u-size-27 u-layout-cell-2" data-animation-name="customAnimationIn" data-animation-duration="1500" data-animation-delay="250">
                 <div class="u-container-layout u-valign-middle-lg u-valign-middle-md u-valign-middle-sm u-valign-middle-xs u-container-layout-2"><span class="u-align-center u-custom-color-4 u-icon u-icon-circle u-text-white u-icon-1"><svg class="u-svg-link" preserveAspectRatio="xMidYMin slice" viewBox="0 0 60 60" style=""><use xlink:href="#svg-44ce"></use></svg><svg class="u-svg-content" viewBox="0 0 60 60" x="0px" y="0px" id="svg-44ce" style="enable-background:new 0 0 60 60;"><g><path d="M42.595,0H17.405C14.977,0,13,1.977,13,4.405v51.189C13,58.023,14.977,60,17.405,60h25.189C45.023,60,47,58.023,47,55.595
 		V4.405C47,1.977,45.023,0,42.595,0z M15,8h30v38H15V8z M17.405,2h25.189C43.921,2,45,3.079,45,4.405V6H15V4.405
