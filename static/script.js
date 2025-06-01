@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Agregar eventos click a los enlaces de navegación
     navLinks.forEach(link => {
         link.addEventListener('click', function (e) {
+            if (!this.getAttribute('href').startsWith('#')) {
+                return;
+            }
             e.preventDefault();
             const sectionId = this.getAttribute('href').substring(1);
 
@@ -46,17 +49,17 @@ document.addEventListener('DOMContentLoaded', function () {
         tipoConsulta.addEventListener('change', function () {
             // Mostrar selector de familiares solo para consultas familiares o de pareja
             familiaresContainer.style.display =
-                ['familiar', 'pareja'].includes(this.value) ? 'block' : 'none';
+                ['familiar', 'pareja', "ninos", "adolescentes"].includes(this.value) ? 'block' : 'none';
         });
 
         // Validar fecha y hora antes de enviar
         citasForm.addEventListener('submit', function (e) {
-            e.preventDefault();
+
             const fecha = document.querySelector('#fecha').value;
             const hora = document.querySelector('#hora').value;
 
             // Validar que la fecha no sea anterior a hoy
-            const hoy = new Date();
+            /*const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
             const fechaSeleccionada = new Date(fecha);
 
@@ -76,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     : [],
                 notas: document.querySelector('#notas').value
             };
-            agregarCita(citaData);
+            agregarCita(citaData);*/
         });
     }
 
@@ -84,15 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const familiaresForm = document.querySelector('#familiares form');
     if (familiaresForm) {
         familiaresForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const familiarData = {
-                nombre: document.querySelector('#familiar-nombre').value,
-                apellido: document.querySelector('#familiar-apellido').value,
-                parentesco: document.querySelector('#familiar-parentesco').value,
-                edad: document.querySelector('#familiar-edad').value,
-                cedula: document.querySelector('#familiar-cedula').value
-            };
-            agregarFamiliar(familiarData);
+
         });
     }
 });
@@ -220,4 +215,5 @@ function cargarDatosPerfil() {
 // Cargar datos iniciales
 window.addEventListener('load', function () {
     cargarDatosPerfil();
+
 }); 
