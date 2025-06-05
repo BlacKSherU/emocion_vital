@@ -94,7 +94,18 @@ def agendarcita(request: HttpRequest):
     paciente = Paciente.objects.get(user=user)
     cita = Cita.objects.create(
         paciente=paciente,
+        Fecha_primera_consulta=request.POST["fecha"],
+        hora_consulta=request.POST["hora"],
+        modalidad=request.POST["modalidad"],
+        tipo_consulta=request.POST["tipo-consulta"],
+        notas=request.POST["notas"],
     )
+
+    if "familiares" in request.POST:
+        for familiar in request.POST["familiares"]:
+            cita.acompañantes.add(familiar)
+    messages.success(request, "cita agendada", "felicidades")
+    return redirect("perfil")
 
 
 def perfil(request: HttpRequest):
@@ -102,7 +113,7 @@ def perfil(request: HttpRequest):
     paciente = Paciente.objects.get(user=request.user)
     user = request.user
     familiares = paciente.familiares.all()
-    print(get_messages(request))
+
     familiar_final = []
     for familiar in familiares:
         usuario_familiar = copy.deepcopy(familiar.user2)
@@ -112,7 +123,8 @@ def perfil(request: HttpRequest):
                 "relacion": familiar.relacion,
             }
         )
-    print(familiar_final)
+    cita = Cita.objects.filter(paciente=paciente)
+
     datos = {
         "nombre": user.first_name,
         "apellido": user.last_name,
@@ -133,6 +145,7 @@ def perfil(request: HttpRequest):
         "tiempoResidenciaUnidad": paciente.Tiempo_residencia_paciente,
         "familiares": familiar_final,
         "fecha_actual": date.today(),
+        "citas": cita,
     }
     try:
         datos["fechaNacimiento"] = paciente.Feche_de_nacimiento.strftime("%Y-%m-%d")

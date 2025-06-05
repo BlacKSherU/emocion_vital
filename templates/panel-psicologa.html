@@ -245,30 +245,17 @@
                             <h3>Citas Pendientes</h3>
                             <div class="list-group">
                                 <!-- Las citas se cargarán dinámicamente aquí -->
+                                {% for cita in citas %}
                                 <a href="#" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">María González</h5>
-                                        <small>15/03/2024 - 10:00</small>
+                                        
+                                        <small>{{cita.Fecha_primera_consulta}} - {{cita.hora_consulta}}</small>
                                     </div>
-                                    <p class="mb-1">Consulta Individual - Presencial</p>
-                                    <small>Notas: Primera sesión de evaluación</small>
+                                    <p class="mb-1">Consulta {{cita.modalidad}} - {{cita.tipo_consulta}}</p>
+                                    <small>Notas: {{cita.notas}}</small>
                                 </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">Familia Rodríguez</h5>
-                                        <small>16/03/2024 - 15:00</small>
-                                    </div>
-                                    <p class="mb-1">Terapia Familiar - Online</p>
-                                    <small>Notas: Sesión de seguimiento mensual</small>
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">Juan Pérez</h5>
-                                        <small>17/03/2024 - 11:00</small>
-                                    </div>
-                                    <p class="mb-1">Consulta Individual - Presencial</p>
-                                    <small>Notas: Evaluación de progreso</small>
-                                </a>
+                                {% endfor %}
+                                
                             </div>
                         </div>
                     </div>
@@ -347,7 +334,7 @@
         document.getElementById("nivelInstruccion").value = '{{nivelInstruccion}}';
         document.getElementById("sexo").value = '{{sexo}}';
         document.getElementById("tiempoResidenciaUnidad").value = '{{tiempoResidenciaUnidad}}';
-        
+        }
     </script>
     <script src="{% static 'js\jquery-3.7.1.min.js' %}"></script>
     <script src="{% static './bootstrap-5.3.3/js/bootstrap.bundle.min.js' %}"></script>
