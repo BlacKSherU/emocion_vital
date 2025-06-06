@@ -1,1 +1,0 @@
-# emocion_vital
