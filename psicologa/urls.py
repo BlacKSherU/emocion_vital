@@ -21,9 +21,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("api.urls")),
-    path("", include("main.urls")),
-    path("api-auth/", include("rest_framework.urls")),
+    path("api/", include("oswald_api.urls")),
 ]
 
 # Wire up our API using automatic URL routing.
