@@ -257,7 +257,7 @@ class Pacientes(models.Model):
     fecha_nacimiento = models.DateField(null=True)
     status = models.CharField(max_length=8, null=True)
     is_menor = models.BooleanField(default=False)
-    familiares = models.ManyToManyField(Familiar)
+    familiares = models.ManyToManyField(Familiar, null=True)
     Lugar_de_nacimiento = models.ForeignKey(
         Direccion, on_delete=models.CASCADE, related_name="lugar_nacimiento", null=True
     )
