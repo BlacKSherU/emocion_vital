@@ -278,7 +278,12 @@ class Pacientes(models.Model):
     Historiamedica = models.ForeignKey(
         HistoriaMedica, on_delete=models.CASCADE, null=True
     )
-
+    pregunta_1 = models.CharField(max_length=100, null=True)
+    pregunta_2 = models.CharField(max_length=100, null=True)
+    pregunta_3 = models.CharField(max_length=100, null=True)
+    respuesta_1 = models.CharField(max_length=100, null=True)
+    respuesta_2 = models.CharField(max_length=100, null=True)
+    respuesta_3 = models.CharField(max_length=100, null=True)
     class Meta:
 
         db_table = "pacientes"
