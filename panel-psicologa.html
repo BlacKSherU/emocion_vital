@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Psicóloga</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#perfil">
+                                <i class="bi bi-person"></i> Mi Perfil
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#citas">
+                                <i class="bi bi-calendar"></i> Gestión de Citas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#familiares">
+                                <i class="bi bi-people"></i> Familiares
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger fw-bold" href="index.html">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Contenido Principal -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Sección de Perfil -->
+                <section id="perfil" class="section-content">
+                    <h2 class="mb-4">Mi Perfil</h2>
+                    <form class="row g-3">
+                        <div class="col-md-6">
+                            <label for="nombres" class="form-label">Nombres</label>
+                            <input type="text" class="form-control" id="nombres" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="apellidos" class="form-label">Apellidos</label>
+                            <input type="text" class="form-control" id="apellidos" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control" id="fechaNacimiento" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="estadoNacimiento" class="form-label">Estado de Nacimiento</label>
+                            <select class="form-select" id="estadoNacimiento" required>
+                                <option value="">Seleccione un estado...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="municipioNacimiento" class="form-label">Municipio de Nacimiento</label>
+                            <select class="form-select" id="municipioNacimiento" required disabled>
+                                <option value="">Seleccione un municipio...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="parroquiaNacimiento" class="form-label">Parroquia de Nacimiento</label>
+                            <select class="form-select" id="parroquiaNacimiento" required disabled>
+                                <option value="">Seleccione una parroquia...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ciudadNacimiento" class="form-label">Ciudad de Nacimiento</label>
+                            <select class="form-select" id="ciudadNacimiento" required disabled>
+                                <option value="">Seleccione una ciudad...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nivelInstruccion" class="form-label">Nivel de Instrucción</label>
+                            <select class="form-select" id="nivelInstruccion" required>
+                                <option value="">Seleccione...</option>
+                                <option value="primaria">Primaria</option>
+                                <option value="secundaria">Secundaria</option>
+                                <option value="tecnico">Técnico</option>
+                                <option value="universitario">Universitario</option>
+                                <option value="postgrado">Postgrado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ocupacion" class="form-label">Ocupación</label>
+                            <input type="text" class="form-control" id="ocupacion" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cedula" class="form-label">Cédula</label>
+                            <input type="text" class="form-control" id="cedula" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefono" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="correo" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" id="correo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sexo" class="form-label">Sexo</label>
+                            <select class="form-select" id="sexo" required>
+                                <option value="">Seleccione...</option>
+                                <option value="masculino">Masculino</option>
+                                <option value="femenino">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="estadoCivil" class="form-label">Estado Civil</label>
+                            <select class="form-select" id="estadoCivil" required>
+                                <option value="">Seleccione...</option>
+                                <option value="soltero">Soltero/a</option>
+                                <option value="casado">Casado/a</option>
+                                <option value="divorciado">Divorciado/a</option>
+                                <option value="viudo">Viudo/a</option>
+                                <option value="conviviente">Conviviente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="religion" class="form-label">Religión</label>
+                            <input type="text" class="form-control" id="religion">
+                        </div>
+                        <div class="col-12">
+                            <label for="centroTrabajo" class="form-label">Centro de Trabajo y/o Estudio</label>
+                            <input type="text" class="form-control" id="centroTrabajo">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="grado" class="form-label">Grado</label>
+                            <input type="text" class="form-control" id="grado">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ciclo" class="form-label">Ciclo</label>
+                            <input type="text" class="form-control" id="ciclo">
+                        </div>
+                        <div class="col-md-8">
+                            <label for="lugarResidencia" class="form-label">Lugar de Residencia</label>
+                            <input type="text" class="form-control" id="lugarResidencia" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="tiempoResidencia" class="form-label">Tiempo de Residencia</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="tiempoResidencia" required>
+                                <select class="form-select" id="tiempoResidenciaUnidad">
+                                    <option value="años">Años</option>
+                                    <option value="meses">Meses</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Preguntas y respuestas de seguridad -->
+                        <div class="col-md-6">
+                            <label for="pregunta1" class="form-label">Pregunta de Seguridad 1</label>
+                            <input type="text" class="form-control" id="pregunta1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="respuesta1" class="form-label">Respuesta 1</label>
+                            <input type="text" class="form-control" id="respuesta1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="pregunta2" class="form-label">Pregunta de Seguridad 2</label>
+                            <input type="text" class="form-control" id="pregunta2" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="respuesta2" class="form-label">Respuesta 2</label>
+                            <input type="text" class="form-control" id="respuesta2" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="pregunta3" class="form-label">Pregunta de Seguridad 3</label>
+                            <input type="text" class="form-control" id="pregunta3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="respuesta3" class="form-label">Respuesta 3</label>
+                            <input type="text" class="form-control" id="respuesta3" required>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Sección de Citas -->
+                <section id="citas" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Gestión de Citas</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3>Agendar Nueva Cita</h3>
+                            <form class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="fecha" class="form-label">Fecha de la Visita</label>
+                                    <input type="date" class="form-control" id="fecha" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="hora" class="form-label">Hora de la Visita</label>
+                                    <select class="form-select" id="hora" required>
+                                        <option value="">Seleccione hora...</option>
+                                        <option value="09:00">09:00</option>
+                                        <option value="10:00">10:00</option>
+                                        <option value="11:00">11:00</option>
+                                        <option value="12:00">12:00</option>
+                                        <option value="13:00">13:00</option>
+                                        <option value="14:00">14:00</option>
+                                        <option value="15:00">15:00</option>
+                                        <option value="16:00">16:00</option>
+                                        <option value="17:00">17:00</option>
+                                        <option value="18:00">18:00</option>
+                                        <option value="19:00">19:00</option>
+                                        <option value="20:00">20:00</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="modalidad" class="form-label">Modalidad de la Cita</label>
+                                    <select class="form-select" id="modalidad" required>
+                                        <option value="">Seleccione modalidad...</option>
+                                        <option value="presencial">Presencial</option>
+                                        <option value="online">Online</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="tipo-consulta" class="form-label">Tipo de Consulta</label>
+                                    <select class="form-select" id="tipo-consulta" required>
+                                        <option value="">Seleccione tipo...</option>
+                                        <option value="individual">Individual</option>
+                                        <option value="familiar">Familiar</option>
+                                        <option value="ninos">Niños</option>
+                                        <option value="adolescentes">Adolescentes</option>
+                                        <option value="pareja">Pareja</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="familiares" class="form-label">Familiares</label>
+                                    <select class="form-select" id="familiares" multiple>
+                                        <!-- Los familiares se cargarán dinámicamente -->
+                                    </select>
+                                    <small class="text-muted">Mantenga presionado Ctrl (Cmd en Mac) para seleccionar
+                                        múltiples familiares</small>
+                                </div>
+                                <div class="col-12">
+                                    <label for="notas" class="form-label">Notas Adicionales</label>
+                                    <textarea class="form-control" id="notas" rows="2"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-success">Agendar Cita</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <h3>Citas Pendientes</h3>
+                            <div class="list-group">
+                                <!-- Las citas se cargarán dinámicamente aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección de Familiares -->
+                <section id="familiares" class="section-content" style="display: none;">
+                    <h2 class="mb-4">Gestión de Familiares</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3>Agregar Familiar</h3>
+                            <form class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="familiar-nombre" class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" id="familiar-nombre" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="familiar-apellido" class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" id="familiar-apellido" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="familiar-parentesco" class="form-label">Parentesco</label>
+                                    <select class="form-select" id="familiar-parentesco" required>
+                                        <option value="padre">Padre</option>
+                                        <option value="madre">Madre</option>
+                                        <option value="hijo">Hijo/a</option>
+                                        <option value="hermano">Hermano/a</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="familiar-edad" class="form-label">Edad</label>
+                                    <input type="number" class="form-control" id="familiar-edad" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="familiar-cedula" class="form-label">Cédula</label>
+                                    <input type="text" class="form-control" id="familiar-cedula" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Agregar Familiar</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <h3>Lista de Familiares</h3>
+                            <div class="list-group" id="lista-familiares">
+                                <!-- Los familiares se cargarán dinámicamente aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Familiar -->
+    <div class="modal fade" id="editarFamiliarModal" tabindex="-1" aria-labelledby="editarFamiliarModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarFamiliarModalLabel">Editar Familiar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editarFamiliarForm">
+                        <input type="hidden" id="editar-familiar-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editar-familiar-nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="editar-familiar-nombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-familiar-apellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="editar-familiar-apellido" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-familiar-parentesco" class="form-label">Parentesco</label>
+                                <select class="form-select" id="editar-familiar-parentesco" required>
+                                    <option value="padre">Padre</option>
+                                    <option value="madre">Madre</option>
+                                    <option value="hijo">Hijo/a</option>
+                                    <option value="hermano">Hermano/a</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-familiar-edad" class="form-label">Edad</label>
+                                <input type="number" class="form-control" id="editar-familiar-edad" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="editar-familiar-cedula" class="form-label">Cédula</label>
+                                <input type="text" class="form-control" id="editar-familiar-cedula" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionFamiliar()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Cita -->
+    <div class="modal fade" id="editarCitaModal" tabindex="-1" aria-labelledby="editarCitaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarCitaModalLabel">Editar Cita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editarCitaForm">
+                        <input type="hidden" id="editar-cita-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editar-fecha" class="form-label">Fecha de la Visita</label>
+                                <input type="date" class="form-control" id="editar-fecha" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-hora" class="form-label">Hora de la Visita</label>
+                                <select class="form-select" id="editar-hora" required>
+                                    <option value="">Seleccione hora...</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00">12:00</option>
+                                    <option value="13:00">13:00</option>
+                                    <option value="14:00">14:00</option>
+                                    <option value="15:00">15:00</option>
+                                    <option value="16:00">16:00</option>
+                                    <option value="17:00">17:00</option>
+                                    <option value="18:00">18:00</option>
+                                    <option value="19:00">19:00</option>
+                                    <option value="20:00">20:00</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-modalidad" class="form-label">Modalidad de la Cita</label>
+                                <select class="form-select" id="editar-modalidad" required>
+                                    <option value="">Seleccione modalidad...</option>
+                                    <option value="presencial">Presencial</option>
+                                    <option value="online">Online</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-tipo-consulta" class="form-label">Tipo de Consulta</label>
+                                <select class="form-select" id="editar-tipo-consulta" required>
+                                    <option value="">Seleccione tipo...</option>
+                                    <option value="individual">Individual</option>
+                                    <option value="familiar">Familiar</option>
+                                    <option value="ninos">Niños</option>
+                                    <option value="adolescentes">Adolescentes</option>
+                                    <option value="pareja">Pareja</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="editar-familiares" class="form-label">Familiares</label>
+                                <select class="form-select" id="editar-familiares" multiple>
+                                    <!-- Los familiares se cargarán dinámicamente -->
+                                </select>
+                                <small class="text-muted">Mantenga presionado Ctrl (Cmd en Mac) para seleccionar múltiples familiares</small>
+                            </div>
+                            <div class="col-12">
+                                <label for="editar-notas" class="form-label">Notas Adicionales</label>
+                                <textarea class="form-control" id="editar-notas" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionCita()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
