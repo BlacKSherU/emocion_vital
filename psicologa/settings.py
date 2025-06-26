@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "oswald_api",
     "corsheaders",
+    "main",
 ]
 
 MIDDLEWARE = [
@@ -80,9 +81,9 @@ WSGI_APPLICATION = "psicologa.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "oswasldobase",
+        "NAME": "emocion_vital",
         "USER": "root",
-        "PASSWORD": "Alp110205$",
+        "PASSWORD": "12345678",
         "HOST": "localhost",
         "PORT": "",
     }

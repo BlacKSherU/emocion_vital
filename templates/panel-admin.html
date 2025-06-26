@@ -49,6 +49,11 @@
                                 <i class="bi bi-gear"></i> Configuración
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger fw-bold" href="login.html">
+                                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -98,34 +103,6 @@
                 <section id="psicologos" class="section-content" style="display: none;">
                     <h2 class="mb-4">Gestión de Psicólogos</h2>
                     <div class="row">
-                        <div class="col-md-4">
-                            <h3>Agregar Psicólogo</h3>
-                            <form class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="psicologo-nombre" class="form-label">Nombre</label>
-                                    <input type="text" class="form-control" id="psicologo-nombre" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="psicologo-apellido" class="form-label">Apellido</label>
-                                    <input type="text" class="form-control" id="psicologo-apellido" required>
-                                </div>
-                                <div class="col-12">
-                                    <label for="psicologo-email" class="form-label">Correo Electrónico</label>
-                                    <input type="email" class="form-control" id="psicologo-email" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="psicologo-cedula" class="form-label">Cédula Profesional</label>
-                                    <input type="text" class="form-control" id="psicologo-cedula" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="psicologo-especialidad" class="form-label">Especialidad</label>
-                                    <input type="text" class="form-control" id="psicologo-especialidad" required>
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">Agregar Psicólogo</button>
-                                </div>
-                            </form>
-                        </div>
                         <div class="col-md-8">
                             <h3>Lista de Psicólogos</h3>
                             <div class="table-responsive">
@@ -166,8 +143,6 @@
                                             <th>Nombre</th>
                                             <th>Cédula</th>
                                             <th>Teléfono</th>
-                                            <th>Psicólogo Asignado</th>
-                                            <th>Última Cita</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -193,21 +168,6 @@
                                             <label for="filtro-fecha" class="form-label">Fecha</label>
                                             <input type="date" class="form-control" id="filtro-fecha">
                                         </div>
-                                        <div class="mb-3">
-                                            <label for="filtro-psicologo" class="form-label">Psicólogo</label>
-                                            <select class="form-select" id="filtro-psicologo">
-                                                <option value="">Todos</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="filtro-estado" class="form-label">Estado</label>
-                                            <select class="form-select" id="filtro-estado">
-                                                <option value="">Todos</option>
-                                                <option value="pendiente">Pendiente</option>
-                                                <option value="completada">Completada</option>
-                                                <option value="cancelada">Cancelada</option>
-                                            </select>
-                                        </div>
                                         <button type="submit" class="btn btn-primary">Filtrar</button>
                                     </form>
                                 </div>
@@ -221,8 +181,6 @@
                                             <th>Fecha</th>
                                             <th>Hora</th>
                                             <th>Paciente</th>
-                                            <th>Psicólogo</th>
-                                            <th>Estado</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -343,6 +301,108 @@
                     </div>
                 </section>
             </main>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Cita -->
+    <div class="modal fade" id="editarCitaModal" tabindex="-1" aria-labelledby="editarCitaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarCitaModalLabel">Editar Cita</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editarCitaForm">
+                        <input type="hidden" id="editar-cita-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editar-fecha" class="form-label">Fecha de la Visita</label>
+                                <input type="date" class="form-control" id="editar-fecha" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-hora" class="form-label">Hora de la Visita</label>
+                                <select class="form-select" id="editar-hora" required>
+                                    <option value="">Seleccione hora...</option>
+                                    <option value="09:00">09:00</option>
+                                    <option value="10:00">10:00</option>
+                                    <option value="11:00">11:00</option>
+                                    <option value="12:00">12:00</option>
+                                    <option value="13:00">13:00</option>
+                                    <option value="14:00">14:00</option>
+                                    <option value="15:00">15:00</option>
+                                    <option value="16:00">16:00</option>
+                                    <option value="17:00">17:00</option>
+                                    <option value="18:00">18:00</option>
+                                    <option value="19:00">19:00</option>
+                                    <option value="20:00">20:00</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-paciente" class="form-label">Paciente</label>
+                                <select class="form-select" id="editar-paciente" required>
+                                    <option value="">Seleccione paciente...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-modalidad" class="form-label">Modalidad</label>
+                                <select class="form-select" id="editar-modalidad" required>
+                                    <option value="">Seleccione modalidad...</option>
+                                    <option value="presencial">Presencial</option>
+                                    <option value="online">Online</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="editar-notas" class="form-label">Notas Adicionales</label>
+                                <textarea class="form-control" id="editar-notas" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionCita()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Paciente -->
+    <div class="modal fade" id="editarPacienteModal" tabindex="-1" aria-labelledby="editarPacienteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editarPacienteModalLabel">Editar Paciente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editarPacienteForm">
+                        <input type="hidden" id="editar-paciente-id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editar-paciente-nombre" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="editar-paciente-nombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-paciente-apellido" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="editar-paciente-apellido" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-paciente-cedula" class="form-label">Cédula</label>
+                                <input type="text" class="form-control" id="editar-paciente-cedula" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-paciente-telefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="editar-paciente-telefono" required>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionPaciente()">Guardar Cambios</button>
+                </div>
+            </div>
         </div>
     </div>
 
