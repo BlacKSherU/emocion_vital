@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 
@@ -6,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static '.\bootstrap-5.3.3\css\bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static '.\bootstrap-icons-1.11.3\font\bootstrap-icons.css' %}">
     <style>
         body {
             background: #fcfddc;
@@ -84,39 +87,187 @@
             text-decoration: underline;
             font-size: 1rem;
         }
-    </style>
-    <script>
-        function mostrarCodigo() {
-            document.getElementById('codigo-section').style.display = 'block';
-            document.getElementById('correo-section').style.display = 'none';
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
         }
-    </script>
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+
+        .step.active {
+            background: #a3d69c;
+            color: #222;
+        }
+
+        .step.completed {
+            background: #8fc98b;
+            color: white;
+        }
+
+        .security-question {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #a3d69c;
+        }
+
+        .question-text {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .documento-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tipo-documento {
+            width: 30%;
+        }
+
+        .numero-documento {
+            width: 70%;
+        }
+    </style>
 </head>
 
 <body>
+    {% if messages %}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        {% for message in messages %}
+        <div id="liveToast" class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-chat-right-text
+                    {% if message.level_tag == 'error' %}
+                    text-danger
+                    {% else %}
+                    text-{{ message.level_tag }} 
+                    {% endif %}
+                    me-2"></i>
+                <strong class="me-auto">{{ message.extra_tags }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="login-container">
         <div class="login-title">Recuperar Contraseña</div>
-        <form onsubmit="event.preventDefault(); mostrarCodigo();">
-            <div id="correo-section">
-                <label class="form-label" for="correo">Correo</label>
-                <input class="form-input" type="email" id="correo" name="correo" placeholder="Ingresa tu correo"
-                    required>
-                <button class="login-btn" type="submit">ENVIAR CÓDIGO</button>
+        
+        <!-- Indicador de pasos -->
+        <div class="step-indicator">
+            <div class="step {% if step == 'cedula' %}active{% elif step == 'preguntas' or step == 'nueva_password' %}completed{% endif %}">1</div>
+            <div class="step {% if step == 'preguntas' %}active{% elif step == 'nueva_password' %}completed{% endif %}">2</div>
+            <div class="step {% if step == 'nueva_password' %}active{% endif %}">3</div>
+        </div>
+
+        <!-- Paso 1: Ingresar cédula -->
+        {% if step == 'cedula' or not step %}
+        <form method="POST">
+            {% csrf_token %}
+            <label class="form-label" for="cedula">Documento de Identidad</label>
+            <div class="documento-container">
+                <div class="tipo-documento">
+                    <select class="form-input" id="tipo_documento" name="tipo_documento" required>
+                        <option value="">Tipo</option>
+                        <option value="V">V</option>
+                        <option value="E">E</option>
+                        <option value="J">J</option>
+                    </select>
+                </div>
+                <div class="numero-documento">
+                    <input class="form-input" type="text" id="cedula" name="cedula" placeholder="Número de documento" required>
+                </div>
             </div>
-            <div id="codigo-section" style="display:none;">
-                <label class="form-label" for="codigo">Código recibido</label>
-                <input class="form-input" type="text" id="codigo" name="codigo" placeholder="Ingresa el código"
-                    required>
-                <label class="form-label" for="nueva-password">Nueva contraseña</label>
-                <input class="form-input" type="password" id="nueva-password" name="nueva-password"
-                    placeholder="Nueva contraseña" required>
-                <button class="login-btn" type="submit">CAMBIAR CONTRASEÑA</button>
-            </div>
+            <button class="login-btn" type="submit">CONTINUAR</button>
         </form>
+        {% endif %}
+
+        <!-- Paso 2: Preguntas de seguridad -->
+        {% if step == 'preguntas' %}
+        <form method="POST">
+            {% csrf_token %}
+            <p class="text-center mb-3">Responde las siguientes preguntas de seguridad:</p>
+            
+            <div class="security-question">
+                <div class="question-text">{{ paciente.pregunta_1 }}</div>
+                <input class="form-input" type="text" name="respuesta1" placeholder="Tu respuesta" required>
+            </div>
+
+            <div class="security-question">
+                <div class="question-text">{{ paciente.pregunta_2 }}</div>
+                <input class="form-input" type="text" name="respuesta2" placeholder="Tu respuesta" required>
+            </div>
+
+            <div class="security-question">
+                <div class="question-text">{{ paciente.pregunta_3 }}</div>
+                <input class="form-input" type="text" name="respuesta3" placeholder="Tu respuesta" required>
+            </div>
+
+            <button class="login-btn" type="submit">VERIFICAR RESPUESTAS</button>
+        </form>
+        {% endif %}
+
+        <!-- Paso 3: Nueva contraseña -->
+        {% if step == 'nueva_password' %}
+        <form method="POST">
+            {% csrf_token %}
+            <label class="form-label" for="nueva_password">Nueva Contraseña</label>
+            <input class="form-input" type="password" id="nueva_password" name="nueva_password" 
+                   placeholder="Ingresa tu nueva contraseña" required>
+
+            <label class="form-label" for="confirmar_password">Confirmar Contraseña</label>
+            <input class="form-input" type="password" id="confirmar_password" name="confirmar_password" 
+                   placeholder="Confirma tu nueva contraseña" required>
+
+            <button class="login-btn" type="submit" onclick="return validarContraseñas()">CAMBIAR CONTRASEÑA</button>
+        </form>
+        {% endif %}
+
         <div class="back-link">
-            <a href="login.html">Volver al inicio de sesión</a>
+            <a href="{% url 'login' %}">Volver al inicio de sesión</a>
         </div>
     </div>
+
+    <script src="{% static 'js\jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static './bootstrap-5.3.3/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        function validarContraseñas() {
+            var password = document.getElementById('nueva_password').value;
+            var confirmar = document.getElementById('confirmar_password').value;
+            
+            if (password !== confirmar) {
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
 </body>
 
 </html>

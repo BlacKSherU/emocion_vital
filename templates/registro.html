@@ -87,6 +87,32 @@
             text-decoration: underline;
             font-size: 1rem;
         }
+
+        .question-text {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .documento-container {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            margin-bottom: 1.2rem;
+        }
+
+        .tipo-documento {
+            flex: 0 0 80px;
+        }
+
+        .numero-documento {
+            flex: 1;
+        }
+
+        .documento-container .form-input {
+            margin-bottom: 0;
+            height: 100%;
+        }
     </style>
 </head>
 
@@ -115,24 +141,42 @@
     {% endif %}
     <div class="login-container">
         <div class="login-title">Registro</div>
-        <form method="POST">
+        <form method="POST" id="registroForm" onsubmit="return validarFormulario()">
             {% csrf_token %}
             <label class="form-label" for="nombre">Nombre</label>
             <input class="form-input" type="text" id="nombre" name="nombre" placeholder="Ingresa tu nombre" required>
+
+            <label class="form-label" for="segundo_nombre">Segundo Nombre</label>
+            <input class="form-input" type="text" id="segundo_nombre" name="segundo_nombre" placeholder="Ingresa tu segundo nombre (opcional)">
 
             <label class="form-label" for="apellido">Apellido</label>
             <input class="form-input" type="text" id="apellido" name="apellido" placeholder="Ingresa tu apellido"
                 required>
 
-            <label class="form-label" for="cedula">Cédula</label>
-            <input class="form-input" type="text" id="cedula" name="cedula" placeholder="Ingresa tu cédula" required>
+            <label class="form-label" for="segundo_apellido">Segundo Apellido</label>
+            <input class="form-input" type="text" id="segundo_apellido" name="segundo_apellido" placeholder="Ingresa tu segundo apellido (opcional)">
+
+            <label class="form-label" for="cedula">Documento de Identidad</label>
+            <div class="documento-container">
+                <div class="tipo-documento">
+                    <select class="form-input" id="tipo_documento" name="tipo_documento" required>
+                        <option value="">Tipo</option>
+                        <option value="V">V</option>
+                        <option value="E">E</option>
+                        <option value="J">J</option>
+                    </select>
+                </div>
+                <div class="numero-documento">
+                    <input class="form-input" type="text" id="cedula" name="cedula" placeholder="Número de documento" required>
+                </div>
+            </div>
 
             <label class="form-label" for="correo">Correo</label>
             <input class="form-input" type="email" id="correo" name="correo" placeholder="Ingresa tu correo" required>
 
             <label class="form-label" for="password">Contraseña</label>
             <input class="form-input" type="password" id="password" name="password" placeholder="Crea una contraseña"
-                required>
+                minlength="6" required>
 
             <label class="form-label" for="pregunta1">Pregunta de Seguridad 1</label>
             <select class="form-input" id="pregunta1" name="pregunta1" required>
@@ -140,9 +184,6 @@
                 <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
                 <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
                 <option value="¿Cuál es el nombre de tu madre?">¿Cuál es el nombre de tu madre?</option>
-                <option value="¿Cuál es tu color favorito?">¿Cuál es tu color favorito?</option>
-                <option value="¿Cuál es tu comida favorita?">¿Cuál es tu comida favorita?</option>
-                <option value="¿Cuál es el nombre de tu mejor amigo de la infancia?">¿Cuál es el nombre de tu mejor amigo de la infancia?</option>
             </select>
 
             <label class="form-label" for="respuesta1">Respuesta 1</label>
@@ -151,9 +192,6 @@
             <label class="form-label" for="pregunta2">Pregunta de Seguridad 2</label>
             <select class="form-input" id="pregunta2" name="pregunta2" required>
                 <option value="">Selecciona una pregunta</option>
-                <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
-                <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
-                <option value="¿Cuál es el nombre de tu madre?">¿Cuál es el nombre de tu madre?</option>
                 <option value="¿Cuál es tu color favorito?">¿Cuál es tu color favorito?</option>
                 <option value="¿Cuál es tu comida favorita?">¿Cuál es tu comida favorita?</option>
                 <option value="¿Cuál es el nombre de tu mejor amigo de la infancia?">¿Cuál es el nombre de tu mejor amigo de la infancia?</option>
@@ -165,12 +203,9 @@
             <label class="form-label" for="pregunta3">Pregunta de Seguridad 3</label>
             <select class="form-input" id="pregunta3" name="pregunta3" required>
                 <option value="">Selecciona una pregunta</option>
-                <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
-                <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
-                <option value="¿Cuál es el nombre de tu madre?">¿Cuál es el nombre de tu madre?</option>
-                <option value="¿Cuál es tu color favorito?">¿Cuál es tu color favorito?</option>
-                <option value="¿Cuál es tu comida favorita?">¿Cuál es tu comida favorita?</option>
-                <option value="¿Cuál es el nombre de tu mejor amigo de la infancia?">¿Cuál es el nombre de tu mejor amigo de la infancia?</option>
+                <option value="¿Cuál es tu película favorita?">¿Cuál es tu película favorita?</option>
+                <option value="¿En qué año naciste?">¿En qué año naciste?</option>
+                <option value="¿Cuál es tu deporte favorito?">¿Cuál es tu deporte favorito?</option>
             </select>
 
             <label class="form-label" for="respuesta3">Respuesta 3</label>
@@ -184,6 +219,112 @@
     </div>
     <script src="{% static 'js\jquery-3.7.1.min.js' %}"></script>
     <script src="{% static './bootstrap-5.3.3/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        function validarPreguntas() {
+            const pregunta1 = document.getElementById('pregunta1').value;
+            const pregunta2 = document.getElementById('pregunta2').value;
+            const pregunta3 = document.getElementById('pregunta3').value;
+            
+            // Resetear estilos
+            document.getElementById('pregunta1').style.borderBottom = '2px solid #222';
+            document.getElementById('pregunta2').style.borderBottom = '2px solid #222';
+            document.getElementById('pregunta3').style.borderBottom = '2px solid #222';
+            
+            // Verificar si hay preguntas seleccionadas
+            if (pregunta1 && pregunta2 && pregunta3) {
+                if (pregunta1 === pregunta2 || pregunta1 === pregunta3 || pregunta2 === pregunta3) {
+                    // Marcar las preguntas duplicadas
+                    if (pregunta1 === pregunta2) {
+                        document.getElementById('pregunta1').style.borderBottom = '2px solid #dc3545';
+                        document.getElementById('pregunta2').style.borderBottom = '2px solid #dc3545';
+                    }
+                    if (pregunta1 === pregunta3) {
+                        document.getElementById('pregunta1').style.borderBottom = '2px solid #dc3545';
+                        document.getElementById('pregunta3').style.borderBottom = '2px solid #dc3545';
+                    }
+                    if (pregunta2 === pregunta3) {
+                        document.getElementById('pregunta2').style.borderBottom = '2px solid #dc3545';
+                        document.getElementById('pregunta3').style.borderBottom = '2px solid #dc3545';
+                    }
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        function validarFormulario() {
+            // Validar campos obligatorios
+            var camposObligatorios = ['nombre', 'apellido', 'tipo_documento', 'cedula', 'correo', 'password'];
+            for (var i = 0; i < camposObligatorios.length; i++) {
+                var campo = document.getElementById(camposObligatorios[i]);
+                if (!campo.value.trim()) {
+                    alert('El campo ' + campo.placeholder + ' es obligatorio');
+                    campo.focus();
+                    return false;
+                }
+            }
+            
+            // Validar tipo de documento
+            var tipoDocumento = document.getElementById('tipo_documento').value;
+            if (!tipoDocumento) {
+                alert('Debes seleccionar el tipo de documento');
+                document.getElementById('tipo_documento').focus();
+                return false;
+            }
+            
+            // Validar formato de cédula (solo números)
+            var cedula = document.getElementById('cedula').value;
+            if (!/^\d+$/.test(cedula)) {
+                alert('El número de documento debe contener solo números');
+                document.getElementById('cedula').focus();
+                return false;
+            }
+            
+            // Validar formato de correo
+            var correo = document.getElementById('correo').value;
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(correo)) {
+                alert('El formato del correo electrónico no es válido');
+                document.getElementById('correo').focus();
+                return false;
+            }
+            
+            // Validar longitud de contraseña
+            var password = document.getElementById('password').value;
+            if (password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                document.getElementById('password').focus();
+                return false;
+            }
+            
+            // Validar preguntas de seguridad
+            var pregunta1 = document.getElementById('pregunta1').value;
+            var pregunta2 = document.getElementById('pregunta2').value;
+            var pregunta3 = document.getElementById('pregunta3').value;
+            
+            if (!pregunta1 || !pregunta2 || !pregunta3) {
+                alert('Debes seleccionar las tres preguntas de seguridad');
+                return false;
+            }
+            
+            // Validar respuestas de seguridad
+            var respuesta1 = document.getElementById('respuesta1').value.trim();
+            var respuesta2 = document.getElementById('respuesta2').value.trim();
+            var respuesta3 = document.getElementById('respuesta3').value.trim();
+            
+            if (!respuesta1 || !respuesta2 || !respuesta3) {
+                alert('Todas las respuestas de seguridad son obligatorias');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Validar cédula en tiempo real
+        document.getElementById('cedula').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
 </body>
 
 </html>
