@@ -49,6 +49,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Agregar eventos click a los enlaces de navegación
     navLinks.forEach(link => {
         link.addEventListener('click', function (e) {
+            // Excluir el enlace de cerrar sesión
+            if (this.classList.contains('logout-link') || this.textContent.includes('Cerrar sesión')) {
+                return; // Permitir el comportamiento normal del enlace
+            }
+            
             e.preventDefault();
             const sectionId = this.getAttribute('href').substring(1);
 
@@ -138,39 +143,6 @@ function inicializarGraficos() {
     }
 }
 
-// Función para cargar la lista de psicólogos desde la API (para panel de psicólogos)
-function cargarPsicologosAPI() {
-    const listaPsicologos = document.getElementById('lista-psicologos');
-    if (!listaPsicologos) return;
-
-    apiRequest('/psicologos/')
-        .then(response => {
-            console.log('Respuesta cruda de la API /psicologos/:', response);
-            let psicologos = Array.isArray(response) ? response :
-                (response.results ? response.results : (response.data ? response.data : []));
-            console.log('Psicólogos procesados:', psicologos);
-            listaPsicologos.innerHTML = psicologos.map(psicologo => `
-                <tr>
-                    <td>${[psicologo.primer_nombre, psicologo.segundo_nombre].filter(Boolean).join(' ')}</td>
-                    <td>${psicologo.n_documento || ''}</td>
-                    <td>${psicologo.especialidad || ''}</td>
-                    <td><span class="badge bg-success">${psicologo.estado || ''}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-warning me-1" onclick="editarPsicologo('${psicologo.n_documento || ''}')\">Editar</button>
-                        <button class="btn btn-sm btn-danger" onclick="eliminarPsicologo('${psicologo.n_documento || ''}')\">Eliminar</button>
-                    </td>
-                </tr>
-            `).join('');
-            if (psicologos.length === 0) {
-                listaPsicologos.innerHTML = '<tr><td colspan="5" class="text-muted">No hay psicólogos registrados</td></tr>';
-            }
-        })
-        .catch(error => {
-            console.error('Error al cargar psicólogos:', error);
-            listaPsicologos.innerHTML = '<tr><td colspan="5" class="text-danger">Error al cargar los psicólogos</td></tr>';
-        });
-}
-
 // Variable global para almacenar los pacientes cargados
 let pacientesGlobal = [];
 
@@ -234,18 +206,6 @@ function filtrarPacientesBusqueda(valorBusqueda) {
 }
 
 // Funciones de utilidad
-function editarPsicologo(cedula) {
-    // Implementar lógica de edición
-    alert(`Editando psicólogo con cédula: ${cedula}`);
-}
-
-function eliminarPsicologo(cedula) {
-    if (confirm('¿Está seguro de eliminar este psicólogo?')) {
-        // Implementar lógica de eliminación
-        alert(`Eliminando psicólogo con cédula: ${cedula}`);
-    }
-}
-
 function verHistorial(cedula) {
     // Implementar lógica para ver historial
     alert(`Viendo historial del paciente con cédula: ${cedula}`);
@@ -397,43 +357,6 @@ async function cargarPacientesEnSelector(selectorId, pacienteSeleccionado = null
     }
 }
 
-// Función para cargar psicólogos en un selector específico
-async function cargarPsicologosEnSelector(selectorId, psicologoSeleccionado = null) {
-    try {
-        const psicologosResponse = await apiRequest('/psicologos/');
-        let psicologos = Array.isArray(psicologosResponse) ? psicologosResponse : 
-                        (psicologosResponse.results ? psicologosResponse.results : 
-                        (psicologosResponse.data ? psicologosResponse.data : []));
-        
-        const selectPsicologos = document.getElementById(selectorId);
-        if (selectPsicologos) {
-            selectPsicologos.innerHTML = '<option value="">Seleccione psicólogo...</option>';
-            
-            psicologos.forEach(psicologo => {
-                const nombreCompleto = [
-                    psicologo.primer_nombre,
-                    psicologo.segundo_nombre,
-                    psicologo.primer_apellido,
-                    psicologo.segundo_apellido
-                ].filter(n => n).join(' ');
-                
-                const option = document.createElement('option');
-                option.value = psicologo.id || psicologo.n_documento;
-                option.textContent = nombreCompleto || `Cédula: ${psicologo.n_documento}`;
-                
-                // Seleccionar el psicólogo actual si se especifica
-                if (psicologoSeleccionado && (psicologo.id == psicologoSeleccionado || psicologo.n_documento == psicologoSeleccionado)) {
-                    option.selected = true;
-                }
-                
-                selectPsicologos.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error('Error al cargar psicólogos en selector:', error);
-    }
-}
-
 // Función para guardar la edición de la cita
 async function guardarEdicionCita() {
     try {
@@ -501,71 +424,8 @@ function cancelarCita(fecha, hora) {
 
 // Cargar datos iniciales
 window.addEventListener('load', function () {
-    cargarPsicologosAPI();
     cargarPacientes();
     cargarCitas();
-});
-
-// Objeto para guardar la especialidad de cada usuario psicólogo
-const especialidadesPsicologos = {};
-
-// Lógica para el formulario de agregar psicólogos
-window.addEventListener('DOMContentLoaded', function () {
-    const formAgregarPsicologo = document.querySelector('#psicologos form');
-    if (formAgregarPsicologo) {
-        formAgregarPsicologo.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const nombre = document.getElementById('psicologo-nombre').value.trim();
-            const apellido = document.getElementById('psicologo-apellido').value.trim();
-            const email = document.getElementById('psicologo-email').value.trim();
-            const cedula = document.getElementById('psicologo-cedula').value.trim();
-            const especialidad = document.getElementById('psicologo-especialidad').value.trim();
-
-            // Crear usuario en /usuarios/
-            const nombres = nombre.split(' ');
-            const apellidos = apellido.split(' ');
-            const first_name = nombres[0] || '';
-            const last_name = apellidos.join(' ');
-            let userId = null;
-            let username = '';
-            try {
-                // Primero, obtener el número de usuarios actuales para generar el username
-                const usuariosResp = await apiRequest('/usuarios/');
-                let usuarios = Array.isArray(usuariosResp) ? usuariosResp : (usuariosResp.results ? usuariosResp.results : (usuariosResp.data ? usuariosResp.data : []));
-                const nextId = (usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1);
-                username = `Psico${nextId}`;
-                const usuarioData = {
-                    username: username,
-                    email: email,
-                    first_name: first_name,
-                    last_name: last_name,
-                    is_active: true
-                };
-                const usuarioCreado = await apiRequest('/usuarios/', 'POST', usuarioData);
-                userId = usuarioCreado.id;
-                // Guardar la especialidad en JS
-                especialidadesPsicologos[userId] = especialidad;
-                // Obtener el siguiente id_psicologo autoincremental
-                const psicologosResp = await apiRequest('/psicologos/');
-                let psicologos = Array.isArray(psicologosResp) ? psicologosResp : (psicologosResp.results ? psicologosResp.results : (psicologosResp.data ? psicologosResp.data : []));
-                const nextPsicologoId = (psicologos.length > 0 ? Math.max(...psicologos.map(p => p.id_psicologo || p.id)) + 1 : 1);
-                // Crear psicólogo en /psicologos/
-                const psicologoData = {
-                    id_psicologo: nextPsicologoId,
-                    id_admin: 1,
-                    id_usuario: userId,
-                    n_documento: cedula
-                };
-                await apiRequest('/psicologos/', 'POST', psicologoData);
-                alert('Psicólogo agregado correctamente');
-                formAgregarPsicologo.reset();
-                cargarPsicologosAPI();
-            } catch (error) {
-                console.error('Error al agregar psicólogo:', error);
-                alert('Error al agregar psicólogo: ' + error.message);
-            }
-        });
-    }
 });
 
 // Función para filtrar citas según los filtros del formulario

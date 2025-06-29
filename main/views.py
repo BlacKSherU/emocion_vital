@@ -356,11 +356,18 @@ def recuperar(request: HttpRequest):
 
 
 def paciente(request: HttpRequest):
-    paciente = Pacientes.objects.get(user=request.user)
+    paciente = Pacientes.objects.filter(user=request.user).first()
+    if not paciente:
+        # Si no hay paciente, crear uno o manejar el error
+        messages.error(request, "No se encontró el paciente asociado al usuario", "error")
+        return redirect("login")
     return render(request, "panel-psicologa.html", {"pacienteid": paciente.id})
 
 
 def psicologa(request: HttpRequest):
     user = request.user
-    paciente = Pacientes.objects.get(user=user)
+    paciente = Pacientes.objects.filter(user=user).first()
+    if not paciente:
+        messages.error(request, "No se encontró el paciente asociado al usuario", "error")
+        return redirect("login")
     return render(request, "panel-admin.html")
