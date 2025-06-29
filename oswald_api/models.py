@@ -342,3 +342,9 @@ class Cita(models.Model):
     tipo_consulta = models.CharField(max_length=100, null=True)
     resultado = models.ForeignKey(Resultado, on_delete=models.CASCADE, null=True)
     notas = models.CharField(max_length=200, null=True)
+    historiamedica_archivo = models.FileField(
+        upload_to="historias_medicas/",
+        null=True,
+        blank=True,
+        help_text="Archivo .docx de historia médica",
+    )
