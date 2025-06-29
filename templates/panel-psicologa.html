@@ -24,17 +24,17 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#citas">
+                            <a class="nav-link" href="#citas" id="nav-citas">
                                 <i class="bi bi-calendar"></i> Gestión de Citas
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#familiares">
+                            <a class="nav-link" href="#familiares" id="nav-familiares">
                                 <i class="bi bi-people"></i> Familiares
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-danger fw-bold" href="index.html">
+                            <a class="nav-link text-danger fw-bold" href="{% url 'home'%}">
                                 <i class="bi bi-box-arrow-right"></i> Cerrar sesión
                             </a>
                         </li>
@@ -47,14 +47,64 @@
                 <!-- Sección de Perfil -->
                 <section id="perfil" class="section-content">
                     <h2 class="mb-4">Mi Perfil</h2>
-                    <form class="row g-3">
+                    
+                    <!-- Mensaje de carga -->
+                    <div class="alert alert-info" id="cargando-perfil" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <strong>Cargando datos del perfil...</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- Mensaje de error -->
+                    <div class="alert alert-danger" id="error-perfil" style="display: none;">
+                        <strong>Error:</strong> <span id="mensaje-error"></span>
+                    </div>
+                    
+                    <!-- Mensaje de bienvenida -->
+                    <div class="alert alert-success" id="bienvenida-perfil" style="display: none;">
+                        <strong>¡Bienvenido!</strong> Completa tu perfil para acceder a todas las funcionalidades.
+                    </div>
+                    
+                    <!-- Botón de debug temporal -->
+                    <div class="alert alert-info" id="debug-panel" style="display: block;">
+                        <strong>Debug:</strong> 
+                        <button type="button" class="btn btn-sm btn-warning" onclick="cargarDatosPerfil().then(() => { console.log('Datos del paciente ID 1 cargados exitosamente'); alert('Datos del paciente ID 1 cargados. Revisa la consola para más detalles.'); })">
+                            Cargar Paciente ID 1
+                        </button>
+                        <button type="button" class="btn btn-sm btn-success" onclick="verificarDatosPacienteID1()">
+                            Verificar Paciente ID 1
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="actualizarAccesoSecciones().then(() => { console.log('Estado del perfil actualizado'); alert('Estado del perfil verificado. Revisa la consola.'); })">
+                            Verificar Estado Perfil
+                        </button>
+                        <button type="button" class="btn btn-sm btn-info" onclick="probarAPI()">
+                            Probar API
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="mostrarInfoDebug()">
+                            Info Debug
+                        </button>
+                        <button type="button" class="btn btn-sm btn-dark" onclick="verificarUsuarioActual()">
+                            Verificar Usuario Actual
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="verificarPacienteExiste(11).then(p => { if(p) alert('Paciente encontrado: ' + p.n_documento); else alert('Paciente no encontrado'); })">
+                            Verificar Paciente 11
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="verificarPacienteExiste(11).then(p => { if(p) return crearUsuarioNuevo(11, p.n_documento); else alert('Paciente 11 no encontrado'); }).then(() => alert('Usuario creado')).catch(e => alert('Error: ' + e.message))">
+                            Crear Usuario desde Paciente 11
+                        </button>
+                    </div>
+                    
+                    <form class="row g-3" id="perfilForm">
                         <div class="col-md-6">
                             <label for="nombres" class="form-label">Nombres</label>
-                            <input type="text" class="form-control" id="nombres" required>
+                            <input type="text" class="form-control" id="nombres" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="col-md-6">
                             <label for="apellidos" class="form-label">Apellidos</label>
-                            <input type="text" class="form-control" id="apellidos" required>
+                            <input type="text" class="form-control" id="apellidos" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="col-md-6">
                             <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
@@ -97,15 +147,24 @@
                         </div>
                         <div class="col-md-6">
                             <label for="ocupacion" class="form-label">Ocupación</label>
-                            <input type="text" class="form-control" id="ocupacion" required>
+                            <input type="text" class="form-control" id="ocupacion" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
+                            <label for="tipoDocumento" class="form-label">Tipo de Documento</label>
+                            <select class="form-select" id="tipoDocumento" required>
+                                <option value="">Seleccione...</option>
+                                <option value="V">V - Venezolana</option>
+                                <option value="E">E - Extranjera</option>
+                                <option value="J">J - Jurídica</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label for="cedula" class="form-label">Cédula</label>
-                            <input type="text" class="form-control" id="cedula" required>
+                            <input type="text" class="form-control" id="cedula" required pattern="[0-9]+" title="Solo se permiten números" maxlength="10">
                         </div>
                         <div class="col-md-6">
                             <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="tel" class="form-control" id="telefono" required>
+                            <input type="tel" class="form-control" id="telefono" required pattern="[0-9]+" title="Solo se permiten números" maxlength="11">
                         </div>
                         <div class="col-md-6">
                             <label for="correo" class="form-label">Correo Electrónico</label>
@@ -132,19 +191,19 @@
                         </div>
                         <div class="col-md-6">
                             <label for="religion" class="form-label">Religión</label>
-                            <input type="text" class="form-control" id="religion">
+                            <input type="text" class="form-control" id="religion" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="col-12">
                             <label for="centroTrabajo" class="form-label">Centro de Trabajo y/o Estudio</label>
-                            <input type="text" class="form-control" id="centroTrabajo">
+                            <input type="text" class="form-control" id="centroTrabajo" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="col-md-6">
                             <label for="grado" class="form-label">Grado</label>
-                            <input type="text" class="form-control" id="grado">
+                            <input type="text" class="form-control" id="grado" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="col-md-6">
                             <label for="ciclo" class="form-label">Ciclo</label>
-                            <input type="text" class="form-control" id="ciclo">
+                            <input type="text" class="form-control" id="ciclo" pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                         </div>
                         <div class="col-md-8">
                             <label for="lugarResidencia" class="form-label">Lugar de Residencia</label>
@@ -153,7 +212,7 @@
                         <div class="col-md-4">
                             <label for="tiempoResidencia" class="form-label">Tiempo de Residencia</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="tiempoResidencia" required>
+                                <input type="number" class="form-control" id="tiempoResidencia" required min="0" title="No se permiten números negativos">
                                 <select class="form-select" id="tiempoResidenciaUnidad">
                                     <option value="años">Años</option>
                                     <option value="meses">Meses</option>
@@ -194,7 +253,10 @@
                 <!-- Sección de Citas -->
                 <section id="citas" class="section-content" style="display: none;">
                     <h2 class="mb-4">Gestión de Citas</h2>
-                    <div class="row">
+                    <div class="alert alert-warning" id="perfil-incompleto-citas" style="display: none;">
+                        <strong>¡Atención!</strong> Debes completar todos los datos del perfil antes de acceder a la gestión de citas.
+                    </div>
+                    <div class="row" id="citas-content" style="display: none;">
                         <div class="col-md-6">
                             <h3>Agendar Nueva Cita</h3>
                             <form class="row g-3">
@@ -268,17 +330,20 @@
                 <!-- Sección de Familiares -->
                 <section id="familiares" class="section-content" style="display: none;">
                     <h2 class="mb-4">Gestión de Familiares</h2>
-                    <div class="row">
+                    <div class="alert alert-warning" id="perfil-incompleto-familiares" style="display: none;">
+                        <strong>¡Atención!</strong> Debes completar todos los datos del perfil antes de acceder a la gestión de familiares.
+                    </div>
+                    <div class="row" id="familiares-content" style="display: none;">
                         <div class="col-md-6">
                             <h3>Agregar Familiar</h3>
                             <form class="row g-3">
                                 <div class="col-md-6">
                                     <label for="familiar-nombre" class="form-label">Nombre</label>
-                                    <input type="text" class="form-control" id="familiar-nombre" required>
+                                    <input type="text" class="form-control" id="familiar-nombre" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="familiar-apellido" class="form-label">Apellido</label>
-                                    <input type="text" class="form-control" id="familiar-apellido" required>
+                                    <input type="text" class="form-control" id="familiar-apellido" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="familiar-parentesco" class="form-label">Parentesco</label>
@@ -292,11 +357,20 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="familiar-edad" class="form-label">Edad</label>
-                                    <input type="number" class="form-control" id="familiar-edad" required>
+                                    <input type="number" class="form-control" id="familiar-edad" required min="5" title="La edad mínima es 5 años">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="familiar-tipo-documento" class="form-label">Tipo de Documento</label>
+                                    <select class="form-select" id="familiar-tipo-documento" required>
+                                        <option value="">Seleccione...</option>
+                                        <option value="V">V - Venezolana</option>
+                                        <option value="E">E - Extranjera</option>
+                                        <option value="J">J - Jurídica</option>
+                                    </select>
                                 </div>
                                 <div class="col-12">
                                     <label for="familiar-cedula" class="form-label">Cédula</label>
-                                    <input type="text" class="form-control" id="familiar-cedula" required>
+                                    <input type="text" class="form-control" id="familiar-cedula" required pattern="[0-9]+" title="Solo se permiten números" maxlength="10">
                                 </div>
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-primary">Agregar Familiar</button>
@@ -329,11 +403,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="editar-familiar-nombre" class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="editar-familiar-nombre" required>
+                                <input type="text" class="form-control" id="editar-familiar-nombre" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                             </div>
                             <div class="col-md-6">
                                 <label for="editar-familiar-apellido" class="form-label">Apellido</label>
-                                <input type="text" class="form-control" id="editar-familiar-apellido" required>
+                                <input type="text" class="form-control" id="editar-familiar-apellido" required pattern="[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+" title="Solo se permiten letras y espacios">
                             </div>
                             <div class="col-md-6">
                                 <label for="editar-familiar-parentesco" class="form-label">Parentesco</label>
@@ -347,11 +421,20 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="editar-familiar-edad" class="form-label">Edad</label>
-                                <input type="number" class="form-control" id="editar-familiar-edad" required>
+                                <input type="number" class="form-control" id="editar-familiar-edad" required min="5" title="La edad mínima es 5 años">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editar-familiar-tipo-documento" class="form-label">Tipo de Documento</label>
+                                <select class="form-select" id="editar-familiar-tipo-documento" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="V">V - Venezolana</option>
+                                    <option value="E">E - Extranjera</option>
+                                    <option value="J">J - Jurídica</option>
+                                </select>
                             </div>
                             <div class="col-12">
                                 <label for="editar-familiar-cedula" class="form-label">Cédula</label>
-                                <input type="text" class="form-control" id="editar-familiar-cedula" required>
+                                <input type="text" class="form-control" id="editar-familiar-cedula" required pattern="[0-9]+" title="Solo se permiten números" maxlength="10">
                             </div>
                         </div>
                     </form>
@@ -440,8 +523,9 @@
     </div>
     
     <script>
-        const pacienteid={{pacienteid}};
-        console.log(pacienteid);
+        // Variable global para el ID del paciente
+        window.pacienteid = {% if pacienteid %}{{pacienteid}}{% else %}1{% endif %};
+        console.log('ID del paciente:', window.pacienteid);
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'script.js' %}"></script>

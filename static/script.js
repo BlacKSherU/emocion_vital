@@ -1,6 +1,9 @@
 // Configuración de la API
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
+// Variable global para el estado del perfil
+let perfilCompleto = false;
+
 // Funciones de la API
 async function apiRequest(endpoint, method = 'GET', data = null) {
     try {
@@ -54,6 +57,267 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
     }
 }
 
+// Función para validar si el perfil está completo
+async function validarPerfilCompleto() {
+    // Primero verificar si hay datos en la base de datos
+    try {
+        // Obtener el ID del usuario actual
+        const idUsuario = window.pacienteid || 1;
+        
+        // Obtener datos del paciente
+        const datosPaciente = await apiRequest(`/pacientes/${idUsuario}/`);
+        
+        if (!datosPaciente) {
+            console.log('No se encontró el paciente');
+            return false;
+        }
+        
+        // Verificar que tenga todos los campos principales completos
+        const camposPrincipales = [
+            'primer_nombre', 'primer_apellido', 'fecha_nacimiento', 
+            'n_documento', 'Telefono_paciente', 'sexo', 'Estado_civil_paciente',
+            'Instruccion_paciente', 'Ocupacion_paciente', 'tipo_documento',
+            'Procedencia_paciente', 'Cantidad_tiempo_residencia_paciente',
+            'pregunta_1', 'respuesta_1', 'pregunta_2', 'respuesta_2', 'pregunta_3', 'respuesta_3'
+        ];
+        
+        // Verificar que todos los campos principales tengan valores válidos
+        const tieneDatosPrincipales = camposPrincipales.every(campo => {
+            const valor = datosPaciente[campo];
+            return valor !== null && valor !== undefined && valor.toString().trim() !== '';
+        });
+        
+        if (!tieneDatosPrincipales) {
+            console.log('Faltan campos principales en la base de datos');
+            console.log('Campos faltantes:', camposPrincipales.filter(campo => {
+                const valor = datosPaciente[campo];
+                return valor === null || valor === undefined || valor.toString().trim() === '';
+            }));
+            return false;
+        }
+        
+        // Verificar que tenga dirección principal
+        if (!datosPaciente.direccion_principal) {
+            console.log('Falta dirección principal');
+            return false;
+        }
+        
+        // Verificar que tenga correo electrónico (del usuario relacionado)
+        if (datosPaciente.user) {
+            try {
+                const datosUsuario = await apiRequest(`/usuarios/${datosPaciente.user}/`);
+                const correoUsuario = datosUsuario.email || datosUsuario.correo;
+                if (!correoUsuario || correoUsuario.trim() === '') {
+                    console.log('Usuario relacionado no tiene correo electrónico');
+                    return false;
+                }
+            } catch (error) {
+                console.log('Error al obtener correo del usuario relacionado');
+                return false;
+            }
+        } else {
+            console.log('Paciente no tiene usuario relacionado');
+            return false;
+        }
+        
+        console.log('Perfil completo detectado en base de datos');
+        return true;
+        
+    } catch (error) {
+        console.error('Error al verificar datos en base de datos:', error);
+    }
+    
+    // Si no hay datos en BD o hay errores, verificar formulario
+    const camposRequeridos = [
+        'nombres', 'apellidos', 'fechaNacimiento', 'estadoNacimiento', 
+        'municipioNacimiento', 'parroquiaNacimiento', 'ciudadNacimiento',
+        'nivelInstruccion', 'ocupacion', 'tipoDocumento', 'cedula', 'telefono', 'correo',
+        'sexo', 'estadoCivil', 'lugarResidencia', 'tiempoResidencia',
+        'pregunta1', 'respuesta1', 'pregunta2', 'respuesta2', 'pregunta3', 'respuesta3'
+    ];
+
+    console.log('Verificando campos del formulario...');
+    for (const campo of camposRequeridos) {
+        const elemento = document.getElementById(campo);
+        if (!elemento) {
+            console.log(`Campo ${campo} no encontrado en el formulario`);
+            return false;
+        }
+        
+        const valor = elemento.value.trim();
+        if (!valor) {
+            console.log(`Campo ${campo} está vacío`);
+            return false;
+        }
+        
+        // Validaciones específicas por tipo de campo
+        if (campo === 'cedula' && valor.length < 7) {
+            console.log(`Cédula ${valor} es muy corta`);
+            return false;
+        }
+        
+        if (campo === 'telefono' && valor.length < 10) {
+            console.log(`Teléfono ${valor} es muy corto`);
+            return false;
+        }
+        
+        if (campo === 'correo' && !valor.includes('@')) {
+            console.log(`Correo ${valor} no es válido`);
+            return false;
+        }
+        
+        if (campo === 'fechaNacimiento') {
+            const fecha = new Date(valor);
+            const hoy = new Date();
+            const edadMinima = new Date();
+            edadMinima.setFullYear(hoy.getFullYear() - 5);
+            
+            if (fecha > edadMinima) {
+                console.log(`Fecha de nacimiento ${valor} es muy reciente`);
+                return false;
+            }
+        }
+    }
+    
+    console.log('Todos los campos del formulario están completos');
+    return true;
+}
+
+// Función para configurar la fecha máxima de nacimiento (5 años atrás)
+function configurarFechaNacimiento() {
+    const fechaInput = document.getElementById('fechaNacimiento');
+    if (fechaInput) {
+        const hoy = new Date();
+        const fechaMinima = new Date();
+        fechaMinima.setFullYear(hoy.getFullYear() - 5);
+        
+        // Formatear fechas para el input date (YYYY-MM-DD)
+        const fechaMaxima = fechaMinima.toISOString().split('T')[0];
+        const fechaMinimaFormateada = new Date(1900, 0, 1).toISOString().split('T')[0];
+        
+        fechaInput.setAttribute('max', fechaMaxima);
+        fechaInput.setAttribute('min', fechaMinimaFormateada);
+        
+        // Agregar evento para validar en tiempo real
+        fechaInput.addEventListener('change', function() {
+            const fechaSeleccionada = new Date(this.value);
+            const fechaLimite = new Date();
+            fechaLimite.setFullYear(fechaLimite.getFullYear() - 5);
+            
+            if (fechaSeleccionada > fechaLimite) {
+                alert('La fecha de nacimiento debe ser al menos 5 años anterior a la fecha actual.');
+                this.value = '';
+            }
+        });
+    }
+}
+
+// Función para validar campos de solo letras en tiempo real
+function configurarValidacionesLetras() {
+    const camposLetras = [
+        'nombres', 'apellidos', 'ocupacion', 'religion', 'centroTrabajo', 'grado', 'ciclo',
+        'familiar-nombre', 'familiar-apellido', 'editar-familiar-nombre', 'editar-familiar-apellido'
+    ];
+
+    camposLetras.forEach(campoId => {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function() {
+                // Remover caracteres no permitidos
+                this.value = this.value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, '');
+            });
+        }
+    });
+}
+
+// Función para validar campos de solo números en tiempo real
+function configurarValidacionesNumeros() {
+    const camposNumeros = [
+        'cedula', 'telefono', 'familiar-cedula', 'editar-familiar-cedula'
+    ];
+
+    camposNumeros.forEach(campoId => {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function() {
+                // Remover caracteres no numéricos
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        }
+    });
+}
+
+// Función para validar edad mínima en tiempo real
+function configurarValidacionEdad() {
+    const camposEdad = ['familiar-edad', 'editar-familiar-edad'];
+    
+    camposEdad.forEach(campoId => {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function() {
+                const valor = parseInt(this.value);
+                if (valor < 5) {
+                    this.setCustomValidity('La edad mínima es 5 años');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+    });
+}
+
+// Función para validar tiempo de residencia no negativo
+function configurarValidacionTiempoResidencia() {
+    const campo = document.getElementById('tiempoResidencia');
+    if (campo) {
+        campo.addEventListener('input', function() {
+            const valor = parseInt(this.value);
+            if (valor < 0) {
+                this.setCustomValidity('No se permiten números negativos');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    }
+}
+
+// Función para actualizar el estado de acceso a las secciones
+async function actualizarAccesoSecciones() {
+    perfilCompleto = await validarPerfilCompleto();
+    
+    const navCitas = document.getElementById('nav-citas');
+    const navFamiliares = document.getElementById('nav-familiares');
+    const perfilIncompletoCitas = document.getElementById('perfil-incompleto-citas');
+    const perfilIncompletoFamiliares = document.getElementById('perfil-incompleto-familiares');
+    const citasContent = document.getElementById('citas-content');
+    const familiaresContent = document.getElementById('familiares-content');
+
+    if (perfilCompleto) {
+        // Habilitar navegación
+        if (navCitas) navCitas.classList.remove('disabled');
+        if (navFamiliares) navFamiliares.classList.remove('disabled');
+        
+        // Ocultar mensajes de advertencia
+        if (perfilIncompletoCitas) perfilIncompletoCitas.style.display = 'none';
+        if (perfilIncompletoFamiliares) perfilIncompletoFamiliares.style.display = 'none';
+        
+        // Mostrar contenido
+        if (citasContent) citasContent.style.display = 'block';
+        if (familiaresContent) familiaresContent.style.display = 'block';
+    } else {
+        // Deshabilitar navegación
+        if (navCitas) navCitas.classList.add('disabled');
+        if (navFamiliares) navFamiliares.classList.add('disabled');
+        
+        // Mostrar mensajes de advertencia
+        if (perfilIncompletoCitas) perfilIncompletoCitas.style.display = 'block';
+        if (perfilIncompletoFamiliares) perfilIncompletoFamiliares.style.display = 'block';
+        
+        // Ocultar contenido
+        if (citasContent) citasContent.style.display = 'none';
+        if (familiaresContent) familiaresContent.style.display = 'none';
+    }
+}
 
 // Funciones específicas de la API
 const api = {
@@ -116,6 +380,13 @@ const api = {
 
 // Manejo de la navegación
 document.addEventListener('DOMContentLoaded', function () {
+    // Configurar validaciones
+    configurarFechaNacimiento();
+    configurarValidacionesLetras();
+    configurarValidacionesNumeros();
+    configurarValidacionEdad();
+    configurarValidacionTiempoResidencia();
+
     // Obtener todos los enlaces de navegación
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('.section-content');
@@ -125,6 +396,14 @@ document.addEventListener('DOMContentLoaded', function () {
         sections.forEach(section => {
             section.style.display = section.id === sectionId ? 'block' : 'none';
         });
+
+        // Verificar acceso antes de cargar datos
+        if (sectionId === 'citas' && !perfilCompleto) {
+            return;
+        }
+        if (sectionId === 'familiares' && !perfilCompleto) {
+            return;
+        }
 
         // Cargar datos específicos según la sección
         if (sectionId === 'citas') {
@@ -145,6 +424,12 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             const sectionId = this.getAttribute('href').substring(1);
 
+            // Verificar acceso para citas y familiares
+            if ((sectionId === 'citas' || sectionId === 'familiares') && !perfilCompleto) {
+                alert('Debes completar todos los datos del perfil antes de acceder a esta sección.');
+                return;
+            }
+
             // Actualizar clases active
             navLinks.forEach(l => l.classList.remove('active'));
             this.classList.add('active');
@@ -160,74 +445,106 @@ document.addEventListener('DOMContentLoaded', function () {
         perfilForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            // Validar que todos los campos requeridos estén completos
+            if (!validarPerfilCompleto()) {
+                alert('Por favor complete todos los campos requeridos del perfil.');
+                return;
+            }
+
             // Obtener el botón submit antes de cualquier operación
             const submitButton = this.querySelector('button[type="submit"]');
             const originalText = submitButton.textContent;
-
-            // Crear dirección antes de enviar el perfil
-            let direccionId = null;
-            try {
-                function getValueOrNull(id) {
-                    const el = document.getElementById(id);
-                    if (!el) {
-                        console.error('No se encontró el elemento con id:', id);
-                        return null;
-                    }
-                    return el.value;
-                }
-
-                const direccionData = {
-                    estado: getValueOrNull('estadoNacimiento'),
-                    municipio: getValueOrNull('municipioNacimiento'),
-                    parroquia: getValueOrNull('parroquiaNacimiento'),
-                    ciudad: getValueOrNull('ciudadNacimiento'),
-                    direccion_corta: 'Prueba'
-                };
-                const direccionResp = await apiRequest('/direcciones/', 'POST', direccionData);
-                direccionId = direccionResp.id || direccionResp.id_direccion;
-            } catch (error) {
-                alert('Error al crear la dirección: ' + error.message);
-                return;
-            }
-            const perfilData = {
-                primer_nombre: getValueOrNull('nombres') ? getValueOrNull('nombres').split(' ')[0] : null,
-                segundo_nombre: getValueOrNull('nombres') ? getValueOrNull('nombres').split(' ').slice(1).join(' ') : null,
-                primer_apellido: getValueOrNull('apellidos') ? getValueOrNull('apellidos').split(' ')[0] : null,
-                segundo_apellido: getValueOrNull('apellidos') ? getValueOrNull('apellidos').split(' ').slice(1).join(' ') : null,
-                fecha_nacimiento: getValueOrNull('fechaNacimiento'),
-                //Lugar_de_nacimiento: document.getElementById('lugarNacimiento').value || null,
-                Instruccion_paciente: getValueOrNull('nivelInstruccion'),
-                Ocupacion_paciente: getValueOrNull('ocupacion'),
-                n_documento: getValueOrNull('cedula'),
-                Telefono_paciente: getValueOrNull('telefono'),
-                sexo: getValueOrNull('sexo'),
-                Estado_civil_paciente: getValueOrNull('estadoCivil'),
-                Religion_paciente: getValueOrNull('religion'),
-                Centros_estudios_trabajos: getValueOrNull('centroTrabajo'),
-                Grado_paciente: getValueOrNull('grado'),
-                Ciclo_paciente: getValueOrNull('ciclo'),
-                Procedencia_paciente: getValueOrNull('lugarResidencia'),
-                Tiempo_residencia_paciente: getValueOrNull('tiempoResidencia'),
-                Cantidad_tiempo_residencia_paciente: parseInt(getValueOrNull('tiempoResidencia')) || null,
-                pregunta_1: getValueOrNull('pregunta1'),
-                respuesta_1: getValueOrNull('respuesta1'),
-                pregunta_2: getValueOrNull('pregunta2'),
-                respuesta_2: getValueOrNull('respuesta2'),
-                pregunta_3: getValueOrNull('pregunta3'),
-                respuesta_3: getValueOrNull('respuesta3'),
-                direccion_principal: direccionId
-            };
-
-            // Log de los datos que se enviarán
-            console.log('Datos a enviar a la API:', perfilData);
 
             try {
                 // Mostrar indicador de carga
                 submitButton.disabled = true;
                 submitButton.textContent = 'Guardando...';
 
-                // Actualizar el paciente con ID 1
-                const response = await api.updatePaciente(1, perfilData);
+                // Obtener el ID del usuario actual
+                const idUsuario = window.pacienteid || 1;
+                
+                // Obtener datos del paciente para el correo
+                const datosPaciente = await apiRequest(`/pacientes/${idUsuario}/`);
+                const correoUsuario = datosPaciente?.email || datosPaciente?.correo;
+                
+                // Buscar el paciente por correo
+                const pacientesResponse = await apiRequest('/pacientes/');
+                let pacientes = Array.isArray(pacientesResponse) ? pacientesResponse :
+                    (pacientesResponse.results ? pacientesResponse.results :
+                        (pacientesResponse.data ? pacientesResponse.data : []));
+                
+                const pacienteExistente = pacientes.find(p => 
+                    (p.email === correoUsuario || p.correo === correoUsuario)
+                ) || pacientes.find(p => p.user === datosPaciente.user);
+                
+                if (!pacienteExistente) {
+                    throw new Error('No se encontró el paciente asociado al usuario');
+                }
+
+                // Crear dirección antes de enviar el perfil
+                let direccionId = null;
+                try {
+                    function getValueOrNull(id) {
+                        const el = document.getElementById(id);
+                        if (!el) {
+                            console.error('No se encontró el elemento con id:', id);
+                            return null;
+                        }
+                        return el.value;
+                    }
+
+                    const direccionData = {
+                        estado: getValueOrNull('estadoNacimiento'),
+                        municipio: getValueOrNull('municipioNacimiento'),
+                        parroquia: getValueOrNull('parroquiaNacimiento'),
+                        ciudad: getValueOrNull('ciudadNacimiento'),
+                        direccion_corta: 'Prueba'
+                    };
+                    const direccionResp = await apiRequest('/direcciones/', 'POST', direccionData);
+                    direccionId = direccionResp.id || direccionResp.id_direccion;
+                } catch (error) {
+                    alert('Error al crear la dirección: ' + error.message);
+                    return;
+                }
+                
+                const perfilData = {
+                    primer_nombre: getValueOrNull('nombres') ? getValueOrNull('nombres').split(' ')[0] : null,
+                    segundo_nombre: getValueOrNull('nombres') ? getValueOrNull('nombres').split(' ').slice(1).join(' ') : null,
+                    primer_apellido: getValueOrNull('apellidos') ? getValueOrNull('apellidos').split(' ')[0] : null,
+                    segundo_apellido: getValueOrNull('apellidos') ? getValueOrNull('apellidos').split(' ').slice(1).join(' ') : null,
+                    fecha_nacimiento: getValueOrNull('fechaNacimiento'),
+                    Instruccion_paciente: getValueOrNull('nivelInstruccion'),
+                    Ocupacion_paciente: getValueOrNull('ocupacion'),
+                    tipo_documento: getValueOrNull('tipoDocumento'),
+                    n_documento: getValueOrNull('cedula'),
+                    Telefono_paciente: getValueOrNull('telefono'),
+                    sexo: getValueOrNull('sexo'),
+                    Estado_civil_paciente: getValueOrNull('estadoCivil'),
+                    Religion_paciente: getValueOrNull('religion'),
+                    Centros_estudios_trabajos: getValueOrNull('centroTrabajo'),
+                    Grado_paciente: getValueOrNull('grado'),
+                    Ciclo_paciente: getValueOrNull('ciclo'),
+                    Procedencia_paciente: getValueOrNull('lugarResidencia'),
+                    Cantidad_tiempo_residencia_paciente: parseInt(getValueOrNull('tiempoResidencia')) || null, // Número
+                    Tiempo_residencia_paciente: getValueOrNull('tiempoResidenciaUnidad'), // Texto del selector (años/meses)
+                    pregunta_1: getValueOrNull('pregunta1'),
+                    respuesta_1: getValueOrNull('respuesta1'),
+                    pregunta_2: getValueOrNull('pregunta2'),
+                    respuesta_2: getValueOrNull('respuesta2'),
+                    pregunta_3: getValueOrNull('pregunta3'),
+                    respuesta_3: getValueOrNull('respuesta3'),
+                    direccion_principal: direccionId,
+                    email: correoUsuario,
+                    correo: correoUsuario,
+                    user: datosPaciente.user,
+                    status: "activo"
+                };
+
+                // Log de los datos que se enviarán
+                console.log('Datos a enviar a la API:', perfilData);
+
+                // Actualizar el paciente usando su ID
+                const response = await api.updatePaciente(pacienteExistente.id, perfilData);
                 console.log('Respuesta del servidor:', response);
 
                 // Verificar si la respuesta es exitosa
@@ -235,6 +552,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     alert('Cambios guardados correctamente');
                     // Recargar los datos del perfil para mostrar la información actualizada
                     await cargarDatosPerfil();
+                    // Actualizar el estado de acceso a las secciones
+                    await actualizarAccesoSecciones();
                 } else {
                     throw new Error('No se recibió respuesta del servidor');
                 }
@@ -246,6 +565,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 submitButton.disabled = false;
                 submitButton.textContent = originalText;
             }
+        });
+
+        // Agregar eventos para validar en tiempo real
+        const camposPerfil = perfilForm.querySelectorAll('input, select');
+        camposPerfil.forEach(campo => {
+            campo.addEventListener('change', async () => await actualizarAccesoSecciones());
+            campo.addEventListener('input', async () => await actualizarAccesoSecciones());
         });
     }
 
@@ -267,6 +593,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Validar fecha y hora antes de enviar
         citasForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            // Verificar que el perfil esté completo
+            if (!perfilCompleto) {
+                alert('Debes completar todos los datos del perfil antes de agendar citas.');
+                return;
+            }
 
             // Obtener el botón submit antes de cualquier operación
             const submitButton = this.querySelector('button[type="submit"]');
@@ -334,6 +666,12 @@ document.addEventListener('DOMContentLoaded', function () {
         familiaresForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
+            // Verificar que el perfil esté completo
+            if (!perfilCompleto) {
+                alert('Debes completar todos los datos del perfil antes de agregar familiares.');
+                return;
+            }
+
             // Obtener el botón submit antes de cualquier operación
             const submitButton = this.querySelector('button[type="submit"]');
             const originalText = submitButton.textContent;
@@ -345,22 +683,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Recopilar datos del formulario para paciente
                 const cedulaFamiliar = document.getElementById('familiar-cedula').value;
+                const tipoDocumentoFamiliar = document.getElementById('familiar-tipo-documento').value;
                 const nombreFamiliar = document.getElementById('familiar-nombre').value.trim();
                 const apellidoFamiliar = document.getElementById('familiar-apellido').value.trim();
                 const edadFamiliar = parseInt(document.getElementById('familiar-edad').value) || null;
+                const parentescoFamiliar = document.getElementById('familiar-parentesco').value;
+
+                // Validar campos requeridos
+                if (!nombreFamiliar || !apellidoFamiliar || !tipoDocumentoFamiliar || !cedulaFamiliar) {
+                    alert('Por favor complete todos los campos requeridos');
+                    return;
+                }
+
+                // Validar edad mínima
+                if (edadFamiliar < 5) {
+                    alert('La edad mínima es 5 años');
+                    return;
+                }
+
+                // Obtener datos del usuario actual
+                const idUsuario = window.pacienteid || 1;
+                // Obtener el paciente para obtener el id de usuario real
+                const datosPaciente = await apiRequest(`/pacientes/${idUsuario}/`);
+                const userId = datosPaciente.user;
+                let cedulaUsuario = null;
+                if (userId) {
+                    // Obtener el usuario real usando el campo user del paciente
+                    const datosUsuario = await apiRequest(`/usuarios/${userId}/`);
+                    cedulaUsuario = datosUsuario.username || datosUsuario.cedula;
+                } else {
+                    // Fallback: usar la cédula del paciente
+                    cedulaUsuario = datosPaciente.n_documento;
+                }
+
+                // Determinar la cédula del familiar
+                let cedulaFinal = cedulaFamiliar;
+                let statusFamiliar = "activo";
+                
+                if (edadFamiliar < 18) {
+                    // Es menor de edad, usar cédula especial
+                    cedulaFinal = await generarCedulaFamiliarMenor(cedulaUsuario);
+                    statusFamiliar = "inactivo";
+                    console.log('Familiar menor de edad, cédula generada:', cedulaFinal);
+                }
+
                 const primerNombre = nombreFamiliar.split(' ')[0] || null;
                 const segundoNombre = nombreFamiliar.split(' ').slice(1).join(' ') || null;
                 const primerApellido = apellidoFamiliar.split(' ')[0] || null;
                 const segundoApellido = apellidoFamiliar.split(' ').slice(1).join(' ') || null;
                 const pacienteFamiliarData = {
-                    tipo_documento: null,
-                    n_documento: cedulaFamiliar,
+                    tipo_documento: tipoDocumentoFamiliar,
+                    n_documento: cedulaFinal,
                     primer_nombre: primerNombre,
                     segundo_nombre: segundoNombre,
                     primer_apellido: primerApellido,
                     segundo_apellido: segundoApellido,
                     fecha_nacimiento: null, // Puedes agregar un campo en el formulario si lo necesitas
-                    status: null,
+                    status: statusFamiliar,
                     is_menor: edadFamiliar !== null ? edadFamiliar < 18 : false,
                     Instruccion_paciente: null,
                     Ocupacion_paciente: null,
@@ -376,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     Telefonos_adicionales: null,
                     sexo: null,
                     Informante: null,
-                    user: null,
+                    user: idUsuario, // Asociar al usuario actual
                     direccion_principal: null,
                     Lugar_de_nacimiento: null,
                     Historiamedica: null
@@ -396,12 +775,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Crear el registro de familiar
                 const familiarData = {
-                    parentesco: document.getElementById('familiar-parentesco').value,
-                    edad: parseInt(document.getElementById('familiar-edad').value) || null,
+                    parentesco: parentescoFamiliar,
+                    edad: edadFamiliar,
                     n_documento: cedulaFamiliar,
                     paciente: 1, // ID del paciente principal (ajusta si es dinámico)
                     familiar: pacienteFamiliar.cedula, // o pacienteFamiliar.id si tu backend lo usa así
-                    relacion: document.getElementById('familiar-parentesco').value,
+                    relacion: parentescoFamiliar,
                     user1: 1, // ID del usuario que registra (por ahora fijo)
                     user2: 1  // ID del usuario del familiar (por ahora fijo)
                 };
@@ -488,6 +867,9 @@ function validarDisponibilidad(fecha, hora) {
 // Función para cargar la lista de familiares
 async function cargarFamiliares() {
     try {
+        // Obtener el ID del usuario actual
+        const idUsuario = window.pacienteid || 1;
+        
         // Obtener todos los pacientes para usar como familiares
         const pacientesResponse = await apiRequest('/pacientes/');
         let pacientes = Array.isArray(pacientesResponse) ? pacientesResponse :
@@ -496,27 +878,45 @@ async function cargarFamiliares() {
 
         console.log('Pacientes para usar como familiares:', pacientes);
 
+        // Filtrar solo los familiares del usuario actual
+        const familiaresUsuario = pacientes.filter(p => 
+            p.user === idUsuario && 
+            p.id !== idUsuario // Excluir al usuario principal
+        );
+
+        console.log('Familiares del usuario actual:', familiaresUsuario);
+
         // Actualizar la lista de familiares en la sección de familiares
         const listaFamiliares = document.getElementById('lista-familiares');
         if (listaFamiliares) {
             // Limpiar la lista actual
             listaFamiliares.innerHTML = '';
 
-            // Mostrar SOLO pacientes sin fecha de nacimiento y su cédula (estos son los familiares)
-            const familiaresPacientes = pacientes.filter(p => !p.fecha_nacimiento && p.n_documento);
-
-            if (familiaresPacientes.length === 0) {
+            if (familiaresUsuario.length === 0) {
                 listaFamiliares.innerHTML = '<div class="list-group-item text-muted">No hay familiares registrados</div>';
             } else {
-                familiaresPacientes.forEach(paciente => {
+                familiaresUsuario.forEach(paciente => {
                     const familiarElement = document.createElement('div');
                     familiarElement.className = 'list-group-item';
                     familiarElement.setAttribute('data-familiar-id', paciente.id);
+                    
+                    const nombreCompleto = [
+                        paciente.primer_nombre,
+                        paciente.segundo_nombre,
+                        paciente.primer_apellido,
+                        paciente.segundo_apellido
+                    ].filter(n => n).join(' ');
+                    
+                    const statusBadge = paciente.status === 'inactivo' ? 
+                        '<span class="badge bg-warning ms-2">Menor de edad</span>' : 
+                        '<span class="badge bg-success ms-2">Activo</span>';
+                    
                     familiarElement.innerHTML = `
                         <div class="d-flex w-100 justify-content-between align-items-center">
                             <div>
-                                <h5 class="mb-1">${paciente.primer_nombre ?? ''} ${paciente.primer_apellido ?? ''}</h5>
-                                <small class="d-block">Cédula: ${paciente.n_documento}</small>
+                                <h5 class="mb-1">${nombreCompleto || 'Sin nombre'}</h5>
+                                <small class="d-block">Cédula: ${paciente.n_documento} ${statusBadge}</small>
+                                <small class="d-block">Tipo: ${paciente.tipo_documento || 'No especificado'}</small>
                             </div>
                             <div class="btn-group-vertical">
                                 <button class="btn btn-sm btn-warning mb-1" onclick="editarFamiliar(${paciente.id})">Editar</button>
@@ -534,8 +934,8 @@ async function cargarFamiliares() {
         if (selectFamiliares) {
             selectFamiliares.innerHTML = '<option value="">Seleccione familiares...</option>';
 
-            // Usar los mismos pacientes como opciones para el selector
-            pacientes.filter(p => !p.fecha_nacimiento && p.n_documento).forEach(paciente => {
+            // Usar solo los familiares del usuario actual
+            familiaresUsuario.forEach(paciente => {
                 let nombreCompleto = [
                     paciente.primer_nombre,
                     paciente.segundo_nombre,
@@ -578,6 +978,7 @@ async function editarFamiliar(id) {
             familiar.primer_apellido,
             familiar.segundo_apellido
         ].filter(a => a).join(' ');
+        document.getElementById('editar-familiar-tipo-documento').value = familiar.tipo_documento || '';
         document.getElementById('editar-familiar-cedula').value = familiar.n_documento || '';
         document.getElementById('editar-familiar-edad').value = familiar.edad || '';
 
@@ -612,13 +1013,20 @@ async function guardarEdicionFamiliar() {
         const familiarId = document.getElementById('editar-familiar-id').value;
         const nombreCompleto = document.getElementById('editar-familiar-nombre').value.trim();
         const apellidoCompleto = document.getElementById('editar-familiar-apellido').value.trim();
+        const tipoDocumento = document.getElementById('editar-familiar-tipo-documento').value;
         const cedula = document.getElementById('editar-familiar-cedula').value;
         const edad = parseInt(document.getElementById('editar-familiar-edad').value) || null;
         const parentesco = document.getElementById('editar-familiar-parentesco').value;
 
         // Validar campos requeridos
-        if (!nombreCompleto || !apellidoCompleto || !cedula) {
+        if (!nombreCompleto || !apellidoCompleto || !tipoDocumento || !cedula) {
             alert('Por favor complete todos los campos requeridos');
+            return;
+        }
+
+        // Validar edad mínima
+        if (edad < 5) {
+            alert('La edad mínima es 5 años');
             return;
         }
 
@@ -630,7 +1038,7 @@ async function guardarEdicionFamiliar() {
 
         // Datos actualizados del paciente
         const pacienteFamiliarData = {
-            tipo_documento: null,
+            tipo_documento: tipoDocumento,
             n_documento: cedula,
             primer_nombre: primerNombre,
             segundo_nombre: segundoNombre,
@@ -781,6 +1189,9 @@ async function editarCita(id) {
 // Función para cargar familiares en un selector específico
 async function cargarFamiliaresEnSelector(selectorId) {
     try {
+        // Obtener el ID del usuario actual
+        const idUsuario = window.pacienteid || 1;
+        
         const pacientesResponse = await apiRequest('/pacientes/');
         let pacientes = Array.isArray(pacientesResponse) ? pacientesResponse :
             (pacientesResponse.results ? pacientesResponse.results :
@@ -790,10 +1201,13 @@ async function cargarFamiliaresEnSelector(selectorId) {
         if (selectFamiliares) {
             selectFamiliares.innerHTML = '';
 
-            // Mostrar SOLO pacientes sin fecha de nacimiento y su cédula (estos son los familiares)
-            const familiaresPacientes = pacientes.filter(p => !p.fecha_nacimiento && p.n_documento);
+            // Filtrar solo los familiares del usuario actual
+            const familiaresUsuario = pacientes.filter(p => 
+                p.user === idUsuario && 
+                p.id !== idUsuario // Excluir al usuario principal
+            );
 
-            familiaresPacientes.forEach(paciente => {
+            familiaresUsuario.forEach(paciente => {
                 let nombreCompleto = [
                     paciente.primer_nombre,
                     paciente.segundo_nombre,
@@ -884,45 +1298,108 @@ async function guardarEdicionCita() {
 // Modificar la función cargarDatosPerfil para mostrar correctamente los selects de dirección
 async function cargarDatosPerfil() {
     console.log('Cargando datos del perfil');
+    
+    // Deshabilitar temporalmente la navegación mientras carga
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.style.pointerEvents = 'none';
+        link.style.opacity = '0.6';
+    });
+    
+    // Mostrar mensaje de carga
+    const cargandoElement = document.getElementById('cargando-perfil');
+    const errorElement = document.getElementById('error-perfil');
+    const bienvenidaElement = document.getElementById('bienvenida-perfil');
+    
+    if (cargandoElement) cargandoElement.style.display = 'block';
+    if (errorElement) errorElement.style.display = 'none';
+    if (bienvenidaElement) bienvenidaElement.style.display = 'none';
+    
     try {
-        console.log(pacienteid);
-        const datosPaciente = await api.getPaciente(pacienteid);
-        console.log('Datos del paciente recibidos:', datosPaciente);
+        // Obtener el ID del usuario actual desde la variable global
+        const idUsuario = window.pacienteid || 1;
+        console.log('ID del usuario actual:', idUsuario);
+        
+        // Intentar obtener los datos del paciente directamente
+        let datosPaciente = null;
+        try {
+            datosPaciente = await apiRequest(`/pacientes/${idUsuario}/`);
+            console.log('Paciente encontrado:', datosPaciente);
+        } catch (error) {
+            if (error.message.includes('404')) {
+                console.log('Paciente no encontrado, mostrando formulario vacío');
+                // Mostrar mensaje de bienvenida para nuevo usuario
+                if (bienvenidaElement) bienvenidaElement.style.display = 'block';
+                if (cargandoElement) cargandoElement.style.display = 'none';
+                
+                // Cargar solo los estados para el formulario vacío
+                await cargarEstadosNacimiento();
+                return;
+            } else {
+                throw error;
+            }
+        }
+        
         if (!datosPaciente) {
-            console.error('No se recibieron datos del paciente');
+            console.log('No se encontró el paciente con ID:', idUsuario);
+            if (bienvenidaElement) bienvenidaElement.style.display = 'block';
+            if (cargandoElement) cargandoElement.style.display = 'none';
             return;
         }
+
         // Si hay dirección principal, cargar y seleccionar los valores
         if (datosPaciente.direccion_principal) {
             try {
                 const direccion = await apiRequest(`/direcciones/${datosPaciente.direccion_principal}/`);
+                console.log('Datos de dirección cargados:', direccion);
+                
+                // Cargar estados primero
+                await cargarEstadosNacimiento();
+                
                 // Seleccionar estado
                 const estadoSel = document.getElementById('estadoNacimiento');
                 if (estadoSel && direccion.estado) {
                     estadoSel.value = String(direccion.estado);
+                    console.log('Estado seleccionado:', direccion.estado);
+                    
+                    // Cargar municipios para este estado
                     await cargarMunicipiosNacimiento(direccion.estado);
-                }
-                // Seleccionar municipio
-                const municipioSel = document.getElementById('municipioNacimiento');
-                if (municipioSel && direccion.municipio) {
-                    municipioSel.value = String(direccion.municipio);
-                    await cargarParroquiasNacimiento(direccion.municipio);
-                }
-                // Seleccionar parroquia
-                const parroquiaSel = document.getElementById('parroquiaNacimiento');
-                if (parroquiaSel && direccion.parroquia) {
-                    parroquiaSel.value = String(direccion.parroquia);
-                }
-                // Seleccionar ciudad
-                const ciudadSel = document.getElementById('ciudadNacimiento');
-                if (ciudadSel && direccion.ciudad) {
+                    
+                    // Seleccionar municipio
+                    const municipioSel = document.getElementById('municipioNacimiento');
+                    if (municipioSel && direccion.municipio) {
+                        municipioSel.value = String(direccion.municipio);
+                        console.log('Municipio seleccionado:', direccion.municipio);
+                        
+                        // Cargar parroquias para este municipio
+                        await cargarParroquiasNacimiento(direccion.municipio);
+                        
+                        // Seleccionar parroquia
+                        const parroquiaSel = document.getElementById('parroquiaNacimiento');
+                        if (parroquiaSel && direccion.parroquia) {
+                            parroquiaSel.value = String(direccion.parroquia);
+                            console.log('Parroquia seleccionada:', direccion.parroquia);
+                        }
+                    }
+                    
+                    // Cargar ciudades para este estado
                     await cargarCiudadesNacimiento(direccion.estado);
-                    ciudadSel.value = String(direccion.ciudad);
+                    
+                    // Seleccionar ciudad
+                    const ciudadSel = document.getElementById('ciudadNacimiento');
+                    if (ciudadSel && direccion.ciudad) {
+                        ciudadSel.value = String(direccion.ciudad);
+                        console.log('Ciudad seleccionada:', direccion.ciudad);
+                    }
                 }
             } catch (error) {
                 console.error('Error al cargar la dirección principal:', error);
             }
+        } else {
+            // Si no hay dirección principal, cargar solo los estados
+            await cargarEstadosNacimiento();
         }
+
         // Mapeo de campos de la API a IDs del formulario
         const mapeoCampos = {
             primer_nombre: 'nombres',
@@ -932,6 +1409,7 @@ async function cargarDatosPerfil() {
             fecha_nacimiento: 'fechaNacimiento',
             Instruccion_paciente: 'nivelInstruccion',
             Ocupacion_paciente: 'ocupacion',
+            tipo_documento: 'tipoDocumento',
             n_documento: 'cedula',
             Telefono_paciente: 'telefono',
             sexo: 'sexo',
@@ -941,8 +1419,8 @@ async function cargarDatosPerfil() {
             Grado_paciente: 'grado',
             Ciclo_paciente: 'ciclo',
             Procedencia_paciente: 'lugarResidencia',
-            Tiempo_residencia_paciente: 'tiempoResidencia',
-            Cantidad_tiempo_residencia_paciente: 'tiempoResidenciaUnidad',
+            Cantidad_tiempo_residencia_paciente: 'tiempoResidencia', // Campo numérico
+            Tiempo_residencia_paciente: 'tiempoResidenciaUnidad', // Campo texto (años/meses)
             pregunta_1: 'pregunta1',
             respuesta_1: 'respuesta1',
             pregunta_2: 'pregunta2',
@@ -950,6 +1428,44 @@ async function cargarDatosPerfil() {
             pregunta_3: 'pregunta3',
             respuesta_3: 'respuesta3'
         };
+
+        let camposCargados = 0;
+        const totalCampos = Object.keys(mapeoCampos).length;
+
+        // Cargar correo del paciente si existe, si no, dejar vacío
+        const campoCorreo = document.getElementById('correo');
+        if (campoCorreo) {
+            const correoPaciente = datosPaciente.correo || datosPaciente.email || '';
+            campoCorreo.value = correoPaciente;
+            console.log('Correo del paciente cargado:', correoPaciente);
+            if (correoPaciente) camposCargados++;
+        }
+
+        // Cargar correo del usuario relacionado al paciente
+        if (campoCorreo && datosPaciente.user) {
+            try {
+                // Obtener el correo del usuario relacionado
+                const datosUsuario = await apiRequest(`/usuarios/${datosPaciente.user}/`);
+                const correoUsuario = datosUsuario.email || datosUsuario.correo || '';
+                campoCorreo.value = correoUsuario;
+                console.log('Correo del usuario relacionado cargado:', correoUsuario);
+                if (correoUsuario) camposCargados++;
+            } catch (error) {
+                console.error('Error al cargar correo del usuario:', error);
+                // Fallback: usar correo del paciente si existe
+                const correoPaciente = datosPaciente.correo || datosPaciente.email || '';
+                campoCorreo.value = correoPaciente;
+                console.log('Correo del paciente (fallback) cargado:', correoPaciente);
+                if (correoPaciente) camposCargados++;
+            }
+        } else if (campoCorreo) {
+            // Si no hay usuario relacionado, usar correo del paciente
+            const correoPaciente = datosPaciente.correo || datosPaciente.email || '';
+            campoCorreo.value = correoPaciente;
+            console.log('Correo del paciente cargado:', correoPaciente);
+            if (correoPaciente) camposCargados++;
+        }
+
         // Actualizar cada campo del formulario
         Object.entries(mapeoCampos).forEach(([apiField, formId]) => {
             const field = document.getElementById(formId);
@@ -958,29 +1474,147 @@ async function cargarDatosPerfil() {
                     const nombres = [datosPaciente.primer_nombre, datosPaciente.segundo_nombre]
                         .filter(n => n).join(' ');
                     field.value = nombres;
+                    console.log('Nombres cargados:', nombres);
+                    if (nombres) camposCargados++;
                 } else if (formId === 'apellidos') {
                     const apellidos = [datosPaciente.primer_apellido, datosPaciente.segundo_apellido]
                         .filter(a => a).join(' ');
                     field.value = apellidos;
+                    console.log('Apellidos cargados:', apellidos);
+                    if (apellidos) camposCargados++;
                 } else if (field.type === 'date') {
                     field.value = datosPaciente[apiField];
+                    console.log(`Campo ${formId} (fecha) cargado:`, datosPaciente[apiField]);
+                    if (datosPaciente[apiField]) camposCargados++;
                 } else if (field.tagName === 'SELECT') {
                     field.value = datosPaciente[apiField];
+                    console.log(`Campo ${formId} (select) cargado:`, datosPaciente[apiField]);
+                    if (datosPaciente[apiField]) camposCargados++;
                 } else {
                     field.value = datosPaciente[apiField];
+                    console.log(`Campo ${formId} cargado:`, datosPaciente[apiField]);
+                    if (datosPaciente[apiField]) camposCargados++;
                 }
             }
         });
+
+        // Actualizar el estado de acceso a las secciones después de cargar los datos
+        await actualizarAccesoSecciones();
+        
+        // Ocultar mensaje de carga
+        if (cargandoElement) cargandoElement.style.display = 'none';
+        
+        console.log('Datos del perfil cargados exitosamente');
+        console.log(`Campos cargados: ${camposCargados}/${totalCampos}`);
+        
+        // Mostrar mensaje de éxito si se cargaron datos
+        if (camposCargados > 0) {
+            const successAlert = document.createElement('div');
+            successAlert.className = 'alert alert-success alert-dismissible fade show';
+            successAlert.innerHTML = `
+                <strong>¡Datos cargados!</strong> Se han cargado ${camposCargados} campos del perfil del paciente ID ${idUsuario}.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            const perfilSection = document.getElementById('perfil');
+            if (perfilSection) {
+                perfilSection.insertBefore(successAlert, perfilSection.firstChild);
+                // Auto-ocultar después de 5 segundos
+                setTimeout(() => {
+                    if (successAlert.parentNode) {
+                        successAlert.remove();
+                    }
+                }, 5000);
+            }
+        }
+        
+        // Habilitar la navegación después de cargar los datos
+        habilitarNavegacion();
+        
     } catch (error) {
         console.error('Error al cargar datos del perfil:', error);
+        
+        // Mostrar mensaje de error
+        if (errorElement) {
+            const mensajeError = document.getElementById('mensaje-error');
+            if (mensajeError) {
+                mensajeError.textContent = error.message;
+            }
+            errorElement.style.display = 'block';
+        }
+        
+        // Ocultar mensaje de carga
+        if (cargandoElement) cargandoElement.style.display = 'none';
+        
+        // Mostrar mensaje de bienvenida como fallback
+        if (bienvenidaElement) bienvenidaElement.style.display = 'block';
+        
+        // Habilitar la navegación incluso si hay error
+        habilitarNavegacion();
     }
+}
+
+// Función para habilitar la navegación
+function habilitarNavegacion() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.style.pointerEvents = 'auto';
+        link.style.opacity = '1';
+    });
 }
 
 // Cargar datos iniciales
 window.addEventListener('load', function () {
-    cargarDatosPerfil();
-    cargarFamiliares();
+    const idUsuario = window.pacienteid || 1;
+    console.log('Página cargada, iniciando carga de datos del usuario ID:', idUsuario);
+    
+    // Mostrar información de debug
+    mostrarInfoDebug();
+    
+    // Cargar datos del perfil del usuario actual directamente
+    cargarDatosPerfil().then(async () => {
+        console.log('Datos del perfil cargados, verificando estado del perfil...');
+        await actualizarAccesoSecciones();
+        console.log('Estado del perfil verificado, ahora cargando familiares...');
+        return cargarFamiliares();
+    }).catch(error => {
+        console.error('Error al cargar datos iniciales:', error);
+    });
 });
+
+// Función para forzar la carga del paciente con ID 1
+async function cargarPacienteID1() {
+    console.log('=== FORZANDO CARGA DEL PACIENTE ID 1 ===');
+    try {
+        const datosPaciente = await apiRequest('/pacientes/1/');
+        console.log('Datos del paciente ID 1:', datosPaciente);
+        return datosPaciente;
+    } catch (error) {
+        console.error('Error al cargar paciente ID 1:', error);
+        return null;
+    }
+}
+
+// Función para verificar si hay datos del paciente en la base de datos
+async function verificarDatosPaciente() {
+    try {
+        const idPaciente = window.pacienteid || 1;
+        console.log('Verificando datos del paciente con ID:', idPaciente);
+        
+        const response = await apiRequest(`/pacientes/${idPaciente}/`);
+        console.log('Respuesta de verificación:', response);
+        
+        if (response) {
+            console.log('Paciente encontrado:', response);
+            return true;
+        } else {
+            console.log('No se encontró el paciente');
+            return false;
+        }
+    } catch (error) {
+        console.error('Error al verificar datos del paciente:', error);
+        return false;
+    }
+}
 
 // Función para eliminar un familiar
 async function eliminarFamiliar(id) {
@@ -1282,4 +1916,401 @@ window.addEventListener('DOMContentLoaded', function () {
             ciudadSel.disabled = false;
         });
     }
-}); 
+});
+
+// Función para probar la conectividad con la API
+async function probarAPI() {
+    console.log('=== PRUEBA DE CONECTIVIDAD API ===');
+    console.log('URL base de la API:', API_BASE_URL);
+    console.log('Variable global pacienteid al inicio de la prueba:', window.pacienteid);
+    
+    try {
+        // Probar endpoint de pacientes
+        console.log('Probando endpoint /pacientes/...');
+        const pacientesResponse = await apiRequest('/pacientes/');
+        console.log('Respuesta de pacientes:', pacientesResponse);
+        
+        // Probar endpoint específico del paciente
+        const idPaciente = window.pacienteid || 1;
+        console.log(`Probando endpoint /pacientes/${idPaciente}/...`);
+        const pacienteResponse = await apiRequest(`/pacientes/${idPaciente}/`);
+        console.log('Respuesta del paciente específico:', pacienteResponse);
+        
+        // Probar endpoint de estados
+        console.log('Probando endpoint /estados/...');
+        const estadosResponse = await apiRequest('/estados/');
+        console.log('Respuesta de estados:', estadosResponse);
+        
+        console.log('=== PRUEBA COMPLETADA ===');
+        return true;
+    } catch (error) {
+        console.error('Error en la prueba de API:', error);
+        return false;
+    }
+}
+
+// Función para mostrar información de debug en la página
+function mostrarInfoDebug() {
+    const debugInfo = {
+        'ID del Usuario Actual': window.pacienteid || 'No definido',
+        'URL de la API': API_BASE_URL,
+        'User Agent': navigator.userAgent,
+        'Timestamp': new Date().toISOString()
+    };
+    
+    console.log('=== INFORMACIÓN DE DEBUG ===');
+    Object.entries(debugInfo).forEach(([key, value]) => {
+        console.log(`${key}:`, value);
+    });
+    console.log('=== FIN DEBUG ===');
+    
+    // Verificar si la variable global se estableció correctamente
+    if (typeof window.pacienteid === 'undefined') {
+        console.error('¡ADVERTENCIA! La variable global pacienteid no está definida');
+    } else {
+        console.log('Variable global pacienteid está definida como:', window.pacienteid);
+        console.log('Tipo de dato:', typeof window.pacienteid);
+    }
+    
+    // Mostrar alerta con información básica
+    alert(`Información de Debug:\nID del Usuario: ${window.pacienteid || 'No definido'}\nURL API: ${API_BASE_URL}\nTimestamp: ${new Date().toISOString()}`);
+}
+
+// Función para verificar y mostrar datos del paciente ID 1
+async function verificarDatosPacienteID1() {
+    console.log('=== VERIFICANDO DATOS DEL USUARIO ACTUAL ===');
+    try {
+        // Obtener el ID del usuario actual
+        const idUsuario = window.pacienteid || 1;
+        
+        // Primero verificar si existe el paciente
+        const pacienteExistente = await verificarPacienteExiste(idUsuario);
+        
+        if (!pacienteExistente) {
+            console.log('❌ No se encontró paciente con ID:', idUsuario);
+            alert('No se encontró paciente con ID ' + idUsuario);
+            return null;
+        }
+        
+        console.log('✅ Paciente encontrado:', pacienteExistente);
+        
+        // Ahora verificar si existe el usuario
+        let datosUsuario;
+        try {
+            datosUsuario = await apiRequest(`/usuarios/${idUsuario}/`);
+            console.log('✅ Usuario encontrado:', datosUsuario);
+        } catch (error) {
+            console.log('❌ Usuario no encontrado, creando uno nuevo...');
+            
+            const cedulaUsuario = pacienteExistente.n_documento || idUsuario.toString();
+            const confirmar = confirm(`No se encontró el usuario con ID ${idUsuario}.\n¿Deseas crear un usuario nuevo con cédula ${cedulaUsuario}?`);
+            
+            if (confirmar) {
+                try {
+                    const usuarioCreado = await crearUsuarioNuevo(idUsuario, cedulaUsuario);
+                    if (usuarioCreado) {
+                        console.log('✅ Usuario creado exitosamente:', usuarioCreado);
+                        datosUsuario = usuarioCreado;
+                    } else {
+                        alert('Error al crear el usuario');
+                        return null;
+                    }
+                } catch (crearError) {
+                    alert('Error al crear usuario: ' + crearError.message);
+                    return null;
+                }
+            } else {
+                alert('Usuario no creado');
+                return null;
+            }
+        }
+        
+        // Mostrar información del paciente y usuario
+        console.log('Datos principales del paciente:');
+        console.log('- Nombres:', pacienteExistente.primer_nombre, pacienteExistente.segundo_nombre);
+        console.log('- Apellidos:', pacienteExistente.primer_apellido, pacienteExistente.segundo_apellido);
+        console.log('- Cédula:', pacienteExistente.n_documento);
+        console.log('- Teléfono:', pacienteExistente.Telefono_paciente);
+        console.log('- Fecha nacimiento:', pacienteExistente.fecha_nacimiento);
+        console.log('- Status:', pacienteExistente.status);
+        
+        const nombreCompleto = [
+            pacienteExistente.primer_nombre,
+            pacienteExistente.segundo_nombre,
+            pacienteExistente.primer_apellido,
+            pacienteExistente.segundo_apellido
+        ].filter(n => n).join(' ');
+        
+        alert(`Usuario ID ${idUsuario}:\n\nPACIENTE:\nNombre: ${nombreCompleto || 'No especificado'}\nCédula: ${pacienteExistente.n_documento || 'No especificada'}\nTeléfono: ${pacienteExistente.Telefono_paciente || 'No especificado'}\nStatus: ${pacienteExistente.status || 'No especificado'}\n\nUSUARIO:\nUsername: ${datosUsuario?.username || 'No especificado'}\nEmail: ${datosUsuario?.email || 'No especificado'}`);
+        
+        return { paciente: pacienteExistente, usuario: datosUsuario };
+        
+    } catch (error) {
+        console.error('❌ Error al verificar usuario actual:', error);
+        alert('Error al verificar usuario actual: ' + error.message);
+        return null;
+    }
+}
+
+// Función para cargar el correo del usuario 8
+async function cargarCorreoUsuario8() {
+    try {
+        console.log('Cargando correo del usuario 8...');
+        const response = await apiRequest('/usuarios/8/');
+        console.log('Datos del usuario 8:', response);
+        
+        if (response && (response.email || response.correo)) {
+            const correo = response.email || response.correo;
+            console.log('Correo del usuario 8 encontrado:', correo);
+            return correo;
+        } else {
+            console.log('No se encontró correo para el usuario 8');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error al cargar correo del usuario 8:', error);
+        return null;
+    }
+}
+
+// Función para generar cédula especial para familiar menor de edad
+async function generarCedulaFamiliarMenor(cedulaUsuario) {
+    try {
+        // Obtener todos los pacientes que son familiares del usuario actual
+        const idUsuario = window.pacienteid || 1;
+        const pacientesResponse = await apiRequest('/pacientes/');
+        let pacientes = Array.isArray(pacientesResponse) ? pacientesResponse :
+            (pacientesResponse.results ? pacientesResponse.results :
+                (pacientesResponse.data ? pacientesResponse.data : []));
+        
+        // Filtrar familiares del usuario actual que sean menores de edad
+        const familiaresMenores = pacientes.filter(p => 
+            p.user === idUsuario && 
+            p.is_menor === true && 
+            p.n_documento && 
+            p.n_documento.startsWith(cedulaUsuario + '-')
+        );
+        
+        // Encontrar el siguiente número disponible
+        let siguienteNumero = 1;
+        if (familiaresMenores.length > 0) {
+            const numerosExistentes = familiaresMenores.map(f => {
+                const match = f.n_documento.match(new RegExp(`^${cedulaUsuario}-(\\d+)$`));
+                return match ? parseInt(match[1]) : 0;
+            });
+            siguienteNumero = Math.max(...numerosExistentes) + 1;
+        }
+        
+        return `${cedulaUsuario}-${siguienteNumero}`;
+    } catch (error) {
+        console.error('Error al generar cédula para familiar menor:', error);
+        return `${cedulaUsuario}-1`;
+    }
+}
+
+// Función para verificar el usuario actual
+async function verificarUsuarioActual() {
+    console.log('=== VERIFICANDO USUARIO ACTUAL ===');
+    const idUsuario = window.pacienteid || 1;
+    console.log('ID del usuario desde variable global:', idUsuario);
+    
+    try {
+        const datosUsuario = await apiRequest(`/usuarios/${idUsuario}/`);
+        console.log('Datos del usuario actual:', datosUsuario);
+        
+        if (datosUsuario) {
+            console.log('✅ Usuario encontrado');
+            console.log('- ID:', datosUsuario.id);
+            console.log('- Username:', datosUsuario.username);
+            console.log('- Email:', datosUsuario.email);
+            console.log('- Correo:', datosUsuario.correo);
+            
+            // Mostrar alerta con información del usuario
+            alert(`Usuario actual:\nID: ${datosUsuario.id}\nUsername: ${datosUsuario.username || 'No especificado'}\nEmail: ${datosUsuario.email || datosUsuario.correo || 'No especificado'}`);
+            
+            return datosUsuario;
+        } else {
+            console.log('❌ Usuario no encontrado');
+            const cedula = await obtenerCedulaUsuario(idUsuario);
+            const confirmar = confirm(`No se encontró el usuario con ID ${idUsuario}.\n¿Deseas crear un usuario nuevo con cédula ${cedula}?`);
+            
+            if (confirmar) {
+                const usuarioCreado = await crearUsuarioNuevo(idUsuario, cedula);
+                if (usuarioCreado) {
+                    alert('Usuario creado exitosamente');
+                    return usuarioCreado;
+                } else {
+                    alert('Error al crear el usuario');
+                    return null;
+                }
+            } else {
+                alert('Usuario no creado');
+                return null;
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error al verificar usuario:', error);
+        
+        if (error.message.includes('404')) {
+            const cedula = await obtenerCedulaUsuario(idUsuario);
+            const confirmar = confirm(`Error 404: Usuario no encontrado.\n¿Deseas crear un usuario nuevo con cédula ${cedula}?`);
+            
+            if (confirmar) {
+                try {
+                    const usuarioCreado = await crearUsuarioNuevo(idUsuario, cedula);
+                    if (usuarioCreado) {
+                        alert('Usuario creado exitosamente');
+                        return usuarioCreado;
+                    } else {
+                        alert('Error al crear el usuario');
+                        return null;
+                    }
+                } catch (crearError) {
+                    alert('Error al crear usuario: ' + crearError.message);
+                    return null;
+                }
+            } else {
+                alert('Usuario no creado');
+                return null;
+            }
+        } else {
+            alert('Error al verificar usuario: ' + error.message);
+            return null;
+        }
+    }
+}
+
+// Función para crear un usuario nuevo
+async function crearUsuarioNuevo(idUsuario, cedula) {
+    try {
+        console.log('Creando usuario nuevo con ID:', idUsuario, 'y cédula:', cedula);
+        
+        // Obtener datos del paciente para usar en la creación del usuario
+        const pacientes = await obtenerTodosLosPacientes();
+        const paciente = pacientes.find(p => p.id == idUsuario);
+        
+        let first_name = "";
+        let last_name = "";
+        let email = "";
+        
+        if (paciente) {
+            first_name = paciente.primer_nombre || "";
+            last_name = paciente.primer_apellido || "";
+            email = paciente.email || paciente.correo || "";
+        }
+        
+        const usuarioData = {
+            username: cedula,
+            email: email,
+            first_name: first_name,
+            last_name: last_name,
+            is_staff: false,
+            is_active: true
+        };
+        
+        console.log('Datos del usuario a crear:', usuarioData);
+        
+        const response = await apiRequest('/usuarios/', 'POST', usuarioData);
+        console.log('Usuario creado:', response);
+        
+        return response;
+    } catch (error) {
+        console.error('Error al crear usuario:', error);
+        throw error;
+    }
+}
+
+// Función para obtener la cédula del usuario registrado
+async function obtenerCedulaUsuario(idUsuario) {
+    try {
+        // Buscar el paciente con el ID correspondiente para obtener su cédula
+        const pacientes = await obtenerTodosLosPacientes();
+        const paciente = pacientes.find(p => p.id == idUsuario);
+        
+        if (paciente && paciente.n_documento) {
+            console.log('Cédula encontrada para usuario', idUsuario, ':', paciente.n_documento);
+            return paciente.n_documento;
+        } else {
+            console.log('No se encontró paciente con ID', idUsuario, 'o no tiene cédula');
+            // Fallback: usar el ID como cédula temporal
+            return idUsuario.toString();
+        }
+    } catch (error) {
+        console.error('Error al obtener cédula del usuario:', error);
+        return idUsuario.toString(); // Fallback al ID como cédula
+    }
+}
+
+// Función para verificar si existe un paciente con el ID
+async function verificarPacienteExiste(idPaciente) {
+    try {
+        console.log('Verificando paciente con ID:', idPaciente);
+        
+        // Buscar directamente el paciente por ID
+        const response = await apiRequest(`/pacientes/${idPaciente}/`);
+        
+        if (response) {
+            console.log('✅ Paciente encontrado:', response);
+            return response;
+        } else {
+            console.log('❌ No se encontró paciente con ID:', idPaciente);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error al verificar paciente:', error);
+        return null;
+    }
+}
+
+// Función para obtener todos los pacientes paginando
+async function obtenerTodosLosPacientes() {
+    try {
+        let todosLosPacientes = [];
+        let pagina = 1;
+        let hayMasPaginas = true;
+        
+        console.log('Obteniendo todos los pacientes paginando...');
+        
+        while (hayMasPaginas) {
+            const url = `/pacientes/?page=${pagina}`;
+            console.log(`Obteniendo página ${pagina}: ${url}`);
+            
+            const response = await apiRequest(url);
+            console.log(`Respuesta página ${pagina}:`, response);
+            
+            let pacientesPagina = [];
+            if (Array.isArray(response)) {
+                pacientesPagina = response;
+            } else if (response.results && Array.isArray(response.results)) {
+                pacientesPagina = response.results;
+            } else if (response.data && Array.isArray(response.data)) {
+                pacientesPagina = response.data;
+            }
+            
+            console.log(`Pacientes en página ${pagina}:`, pacientesPagina.length);
+            todosLosPacientes = todosLosPacientes.concat(pacientesPagina);
+            
+            // Verificar si hay más páginas
+            if (response.next && response.next !== null) {
+                pagina++;
+            } else {
+                hayMasPaginas = false;
+            }
+            
+            // Prevenir bucle infinito
+            if (pagina > 50) {
+                console.warn('Límite de páginas alcanzado (50), deteniendo paginación');
+                hayMasPaginas = false;
+            }
+        }
+        
+        console.log(`Total de pacientes obtenidos: ${todosLosPacientes.length}`);
+        return todosLosPacientes;
+        
+    } catch (error) {
+        console.error('Error al obtener todos los pacientes:', error);
+        throw error;
+    }
+}
+
+// ... existing code ... 

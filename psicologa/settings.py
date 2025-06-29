@@ -82,9 +82,9 @@ WSGI_APPLICATION = "psicologa.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "emocion_vital",
+        "NAME": "oswasldobase",
         "USER": "root",
-        "PASSWORD": "12345678",
+        "PASSWORD": "Alp110205$",
         "HOST": "localhost",
         "PORT": "",
     }
