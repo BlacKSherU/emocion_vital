@@ -284,6 +284,7 @@ class Pacientes(models.Model):
     respuesta_1 = models.CharField(max_length=100, null=True)
     respuesta_2 = models.CharField(max_length=100, null=True)
     respuesta_3 = models.CharField(max_length=100, null=True)
+
     class Meta:
 
         db_table = "pacientes"
