@@ -2113,27 +2113,23 @@ async function verificarUsuarioActual() {
     console.log('=== VERIFICANDO USUARIO ACTUAL ===');
     const idUsuario = window.pacienteid || 1;
     console.log('ID del usuario desde variable global:', idUsuario);
-    
     try {
-        const datosUsuario = await apiRequest(`/usuarios/${idUsuario}/`);
+        // Buscar el usuario en todas las páginas
+        const todosLosUsuarios = await obtenerTodosLosUsuarios();
+        const datosUsuario = todosLosUsuarios.find(u => u.id == idUsuario);
         console.log('Datos del usuario actual:', datosUsuario);
-        
         if (datosUsuario) {
             console.log('✅ Usuario encontrado');
             console.log('- ID:', datosUsuario.id);
             console.log('- Username:', datosUsuario.username);
             console.log('- Email:', datosUsuario.email);
             console.log('- Correo:', datosUsuario.correo);
-            
-            // Mostrar alerta con información del usuario
             alert(`Usuario actual:\nID: ${datosUsuario.id}\nUsername: ${datosUsuario.username || 'No especificado'}\nEmail: ${datosUsuario.email || datosUsuario.correo || 'No especificado'}`);
-            
             return datosUsuario;
         } else {
             console.log('❌ Usuario no encontrado');
             const cedula = await obtenerCedulaUsuario(idUsuario);
             const confirmar = confirm(`No se encontró el usuario con ID ${idUsuario}.\n¿Deseas crear un usuario nuevo con cédula ${cedula}?`);
-            
             if (confirmar) {
                 const usuarioCreado = await crearUsuarioNuevo(idUsuario, cedula);
                 if (usuarioCreado) {
@@ -2150,33 +2146,8 @@ async function verificarUsuarioActual() {
         }
     } catch (error) {
         console.error('❌ Error al verificar usuario:', error);
-        
-        if (error.message.includes('404')) {
-            const cedula = await obtenerCedulaUsuario(idUsuario);
-            const confirmar = confirm(`Error 404: Usuario no encontrado.\n¿Deseas crear un usuario nuevo con cédula ${cedula}?`);
-            
-            if (confirmar) {
-                try {
-                    const usuarioCreado = await crearUsuarioNuevo(idUsuario, cedula);
-                    if (usuarioCreado) {
-                        alert('Usuario creado exitosamente');
-                        return usuarioCreado;
-                    } else {
-                        alert('Error al crear el usuario');
-                        return null;
-                    }
-                } catch (crearError) {
-                    alert('Error al crear usuario: ' + crearError.message);
-                    return null;
-                }
-            } else {
-                alert('Usuario no creado');
-                return null;
-            }
-        } else {
-            alert('Error al verificar usuario: ' + error.message);
-            return null;
-        }
+        alert('Error al verificar usuario: ' + error.message);
+        return null;
     }
 }
 
@@ -2313,4 +2284,115 @@ async function obtenerTodosLosPacientes() {
     }
 }
 
+// Función para obtener todos los usuarios paginando
+async function obtenerTodosLosUsuarios() {
+    try {
+        let todosLosUsuarios = [];
+        let pagina = 1;
+        let hayMasPaginas = true;
+        
+        console.log('Obteniendo todos los usuarios paginando...');
+        
+        while (hayMasPaginas) {
+            const url = `/usuarios/?page=${pagina}`;
+            console.log(`Obteniendo página ${pagina}: ${url}`);
+            
+            const response = await apiRequest(url);
+            console.log(`Respuesta página ${pagina}:`, response);
+            
+            let usuariosPagina = [];
+            if (Array.isArray(response)) {
+                usuariosPagina = response;
+            } else if (response.results && Array.isArray(response.results)) {
+                usuariosPagina = response.results;
+            } else if (response.data && Array.isArray(response.data)) {
+                usuariosPagina = response.data;
+            }
+            
+            console.log(`Usuarios en página ${pagina}:`, usuariosPagina.length);
+            todosLosUsuarios = todosLosUsuarios.concat(usuariosPagina);
+            
+            // Verificar si hay más páginas
+            if (response.next && response.next !== null) {
+                pagina++;
+            } else {
+                hayMasPaginas = false;
+            }
+            
+            // Prevenir bucle infinito
+            if (pagina > 50) {
+                console.warn('Límite de páginas alcanzado (50), deteniendo paginación');
+                hayMasPaginas = false;
+            }
+        }
+        
+        console.log(`Total de usuarios obtenidos: ${todosLosUsuarios.length}`);
+        return todosLosUsuarios;
+        
+    } catch (error) {
+        console.error('Error al obtener todos los usuarios:', error);
+        throw error;
+    }
+}
+
+// ... existing code ... 
+
+// Función para buscar un usuario por ID, primero directo y luego paginando si es necesario
+async function buscarUsuarioPorId(id) {
+    console.log('=== BUSCANDO USUARIO POR ID ===');
+    console.log('ID solicitado:', id);
+    try {
+        // Intentar obtener el usuario directamente
+        const usuario = await apiRequest(`/usuarios/${id}/`);
+        if (usuario && usuario.id == id) {
+            console.log('✅ Usuario encontrado directamente:', usuario);
+            alert(`Usuario encontrado (directo):\nID: ${usuario.id}\nUsername: ${usuario.username || 'No especificado'}\nEmail: ${usuario.email || usuario.correo || 'No especificado'}`);
+            return usuario;
+        }
+    } catch (error) {
+        // Si es 404, buscar paginando
+        if (error.message && error.message.includes('404')) {
+            console.warn('Usuario no encontrado directamente, buscando en todas las páginas...');
+            try {
+                let pagina = 1;
+                let hayMasPaginas = true;
+                while (hayMasPaginas) {
+                    const url = `/usuarios/?page=${pagina}`;
+                    const response = await apiRequest(url);
+                    let usuariosPagina = [];
+                    if (Array.isArray(response)) {
+                        usuariosPagina = response;
+                    } else if (response.results && Array.isArray(response.results)) {
+                        usuariosPagina = response.results;
+                    } else if (response.data && Array.isArray(response.data)) {
+                        usuariosPagina = response.data;
+                    }
+                    const encontrado = usuariosPagina.find(u => u.id == id);
+                    if (encontrado) {
+                        console.log('✅ Usuario encontrado paginando:', encontrado);
+                        alert(`Usuario encontrado (paginando):\nID: ${encontrado.id}\nUsername: ${encontrado.username || 'No especificado'}\nEmail: ${encontrado.email || encontrado.correo || 'No especificado'}`);
+                        return encontrado;
+                    }
+                    if (response.next && response.next !== null) {
+                        pagina++;
+                    } else {
+                        hayMasPaginas = false;
+                    }
+                    if (pagina > 50) {
+                        console.warn('Límite de páginas alcanzado (50), deteniendo paginación');
+                        hayMasPaginas = false;
+                    }
+                }
+                alert(`No se encontró el usuario con ID ${id} en ninguna página.`);
+                return null;
+            } catch (err) {
+                alert('Error al buscar usuario paginando: ' + err.message);
+                return null;
+            }
+        } else {
+            alert('Error al buscar usuario: ' + error.message);
+            return null;
+        }
+    }
+}
 // ... existing code ... 
