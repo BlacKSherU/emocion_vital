@@ -11,6 +11,7 @@ urlpatterns = [
     path("recuperar", views.recuperar, name="recuperar"),
     path("paciente", views.paciente, name="paciente"),
     path("psicologa", views.psicologa, name="psicologa"),
+    path("test-static", views.test_static, name="test_static"),
 ]
 
 # Wire up our API using automatic URL routing.

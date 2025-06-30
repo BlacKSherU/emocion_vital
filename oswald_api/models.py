@@ -332,7 +332,7 @@ class Resultado(models.Model):
 class Cita(models.Model):
     paciente = models.ForeignKey(Pacientes, on_delete=models.CASCADE)
     acompañantes = models.ManyToManyField(
-        Pacientes, related_name="acompañantes", verbose_name="acompañantes"
+        Pacientes, related_name="acompañantes", verbose_name="acompañantes", blank=True
     )
     Numero_historial = models.CharField(max_length=8)
     Fecha_primera_consulta = models.DateField()

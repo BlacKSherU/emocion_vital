@@ -82,7 +82,7 @@ WSGI_APPLICATION = "psicologa.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "oswasldobase",
+        "NAME": "emocion_vital",
         "USER": "root",
         "PASSWORD": "Alp110205$",
         "HOST": "localhost",
@@ -132,7 +132,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# STATIC_ROOT = BASE_DIR / "staticfiles"  # Comentado para desarrollo
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",

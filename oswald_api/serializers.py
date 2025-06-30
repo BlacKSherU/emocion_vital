@@ -141,6 +141,13 @@ class ResultadoSerializer(serializers.ModelSerializer):
 
 
 class CitaSerializer(serializers.ModelSerializer):
+    acompañantes = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=Pacientes.objects.all(), 
+        required=False,
+        allow_empty=True
+    )
+    
     class Meta:
         model = Cita
         fields = "__all__"
