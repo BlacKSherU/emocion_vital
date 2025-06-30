@@ -359,23 +359,26 @@ def paciente(request: HttpRequest):
     paciente = Pacientes.objects.filter(user=request.user).first()
     if not paciente:
         # Si no hay paciente, crear uno o manejar el error
-        messages.error(request, "No se encontró el paciente asociado al usuario", "error")
+        messages.error(
+            request, "No se encontró el paciente asociado al usuario", "error"
+        )
         return redirect("login")
     return render(request, "panel-psicologa.html", {"pacienteid": paciente.id})
 
 
 def psicologa(request: HttpRequest):
     pacienteid = request.user.id
-    return render(request, "panel-psicologa.html", {"pacienteid": pacienteid})
+    return render(request, "panel-admin.html", {"pacienteid": pacienteid})
 
 
 def test_static(request: HttpRequest):
     """Vista temporal para probar archivos estáticos"""
     from django.conf import settings
+
     debug_info = {
-        'STATIC_URL': settings.STATIC_URL,
-        'STATICFILES_DIRS': settings.STATICFILES_DIRS,
-        'DEBUG': settings.DEBUG,
-        'BASE_DIR': str(settings.BASE_DIR),
+        "STATIC_URL": settings.STATIC_URL,
+        "STATICFILES_DIRS": settings.STATICFILES_DIRS,
+        "DEBUG": settings.DEBUG,
+        "BASE_DIR": str(settings.BASE_DIR),
     }
     return render(request, "test_static.html", {"debug": debug_info})
