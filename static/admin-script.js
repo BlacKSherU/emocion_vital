@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', function () {
         sections.forEach(section => {
             section.style.display = section.id === sectionId ? 'block' : 'none';
         });
+        
+        // Si se muestra el dashboard, actualizar los datos
+        if (sectionId === 'dashboard') {
+            cargarDatosDashboard();
+        }
     }
 
     // Agregar eventos click a los enlaces de navegación
@@ -146,6 +151,11 @@ function inicializarGraficos() {
 // Variable global para almacenar los pacientes cargados
 let pacientesGlobal = [];
 
+// Variables globales para el dashboard
+let numeroPacientes = 0;
+let citasTotales = 0;
+let citasHoy = 0;
+
 function cargarPacientes() {
     const listaPacientes = document.getElementById('lista-pacientes');
     if (!listaPacientes) return;
@@ -158,6 +168,9 @@ function cargarPacientes() {
             console.log('Pacientes procesados:', pacientes);
             pacientesGlobal = pacientes; // Guardar en variable global
             renderizarPacientes(pacientes);
+            
+            // Actualizar dashboard con los datos de pacientes
+            actualizarDashboardPacientes(pacientes, response);
         })
         .catch(error => {
             console.error('Error al cargar pacientes:', error);
@@ -260,6 +273,9 @@ function cargarCitas() {
             console.log('Citas procesadas:', citas);
             citasGlobal = citas; // Guardar en variable global
             renderizarCitas(citas);
+            
+            // Actualizar dashboard con los datos de citas
+            actualizarDashboardCitas(citas, response);
         })
         .catch(error => {
             console.error('Error al cargar citas:', error);
@@ -424,9 +440,105 @@ function cancelarCita(fecha, hora) {
 
 // Cargar datos iniciales
 window.addEventListener('load', function () {
+    console.log('Página cargada, iniciando carga de datos...');
     cargarPacientes();
     cargarCitas();
+    // Cargar dashboard después de un pequeño delay para asegurar que el DOM esté listo
+    setTimeout(cargarDatosDashboard, 1000);
 });
+
+// Función para cargar los datos del dashboard
+async function cargarDatosDashboard() {
+    try {
+        console.log('Cargando datos del dashboard...');
+        
+        // Cargar pacientes
+        const pacientesResponse = await apiRequest('/pacientes/');
+        numeroPacientes = pacientesResponse.count || 0;
+        console.log('Número de pacientes:', numeroPacientes);
+        
+        // Cargar citas
+        const citasResponse = await apiRequest('/citas/');
+        citasTotales = citasResponse.count || 0;
+        console.log('Citas totales:', citasTotales);
+        
+        // Obtener fecha de hoy
+        const hoy = new Date().toISOString().split('T')[0];
+        console.log('Fecha de hoy:', hoy);
+        
+        // Contar citas de hoy usando los campos específicos
+        let citas = Array.isArray(citasResponse) ? citasResponse :
+            (citasResponse.results ? citasResponse.results : 
+            (citasResponse.data ? citasResponse.data : []));
+        
+        citasHoy = citas.filter(cita => {
+            const fechaCita = cita.Fecha_primera_consulta;
+            return fechaCita === hoy;
+        }).length;
+        console.log('Citas de hoy:', citasHoy);
+        
+        // Actualizar elementos del dashboard
+        const totalPacientesElement = document.getElementById('total-pacientes');
+        const citasHoyElement = document.getElementById('citas-hoy');
+        const totalCitasElement = document.getElementById('total-citas');
+        
+        console.log('Elementos encontrados:', {
+            totalPacientes: !!totalPacientesElement,
+            citasHoy: !!citasHoyElement,
+            totalCitas: !!totalCitasElement
+        });
+        
+        // Establecer valores en los elementos
+        if (totalPacientesElement) {
+            totalPacientesElement.textContent = numeroPacientes.toString();
+            console.log('Establecido pacientes:', numeroPacientes);
+        }
+        
+        if (citasHoyElement) {
+            citasHoyElement.textContent = citasHoy.toString();
+            console.log('Establecido citas hoy:', citasHoy);
+        }
+        
+        if (totalCitasElement) {
+            totalCitasElement.textContent = citasTotales.toString();
+            console.log('Establecido total citas:', citasTotales);
+        }
+        
+        console.log('Dashboard actualizado con variables:', {
+            numeroPacientes,
+            citasTotales,
+            citasHoy
+        });
+        
+        // Verificar que se hayan establecido correctamente
+        console.log('Valores finales en el DOM:', {
+            pacientes: totalPacientesElement ? totalPacientesElement.textContent : 'no encontrado',
+            citasHoy: citasHoyElement ? citasHoyElement.textContent : 'no encontrado',
+            totalCitas: totalCitasElement ? totalCitasElement.textContent : 'no encontrado'
+        });
+        
+    } catch (error) {
+        console.error('Error al cargar datos del dashboard:', error);
+        
+        // Establecer valores por defecto en caso de error
+        numeroPacientes = 0;
+        citasTotales = 0;
+        citasHoy = 0;
+        
+        const elementos = {
+            'total-pacientes': '0',
+            'citas-hoy': '0', 
+            'total-citas': '0'
+        };
+        
+        Object.entries(elementos).forEach(([id, valor]) => {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                elemento.textContent = valor;
+            }
+        });
+    }
+}
 
 // Función para filtrar citas según los filtros del formulario
 function filtrarCitas() {
@@ -499,4 +611,84 @@ async function guardarEdicionPaciente() {
         console.error('Error al guardar edición del paciente:', error);
         alert('Error al guardar los cambios: ' + error.message);
     }
-} 
+}
+
+// Función para actualizar solo la parte de pacientes del dashboard
+function actualizarDashboardPacientes(pacientes, response = null) {
+    try {
+        // Usar count de la respuesta directamente
+        const pacientesActivos = response && response.count ? response.count : pacientes.length;
+        
+        // Actualizar el elemento del dashboard
+        const totalPacientesElement = document.getElementById('total-pacientes');
+        if (totalPacientesElement) {
+            totalPacientesElement.textContent = pacientesActivos;
+        }
+        
+        console.log('Dashboard pacientes actualizado:', { pacientesActivos });
+    } catch (error) {
+        console.error('Error al actualizar dashboard pacientes:', error);
+    }
+}
+
+// Función para actualizar solo la parte de citas del dashboard
+function actualizarDashboardCitas(citas, response = null) {
+    try {
+        // Obtener fecha de hoy en formato YYYY-MM-DD
+        const hoy = new Date().toISOString().split('T')[0];
+        
+        // Contar citas de hoy
+        const citasHoy = citas.filter(cita => {
+            const fechaCita = cita.Fecha_primera_consulta || cita.fecha;
+            return fechaCita === hoy;
+        }).length;
+        
+        // Usar count de la respuesta directamente para total de citas
+        const totalCitas = response && response.count ? response.count : citas.length;
+        
+        // Actualizar los elementos del dashboard
+        const citasHoyElement = document.getElementById('citas-hoy');
+        const totalCitasElement = document.getElementById('total-citas');
+        
+        if (citasHoyElement) {
+            citasHoyElement.textContent = citasHoy;
+        }
+        
+        if (totalCitasElement) {
+            totalCitasElement.textContent = totalCitas;
+        }
+        
+        console.log('Dashboard citas actualizado:', { citasHoy, totalCitas });
+    } catch (error) {
+        console.error('Error al actualizar dashboard citas:', error);
+    }
+}
+
+// Función para forzar la actualización del dashboard
+function actualizarDashboard() {
+    console.log('Forzando actualización del dashboard...');
+    const totalPacientesElement = document.getElementById('total-pacientes');
+    const citasHoyElement = document.getElementById('citas-hoy');
+    const totalCitasElement = document.getElementById('total-citas');
+    
+    if (totalPacientesElement) {
+        totalPacientesElement.textContent = numeroPacientes.toString();
+    }
+    
+    if (citasHoyElement) {
+        citasHoyElement.textContent = citasHoy.toString();
+    }
+    
+    if (totalCitasElement) {
+        totalCitasElement.textContent = citasTotales.toString();
+    }
+    
+    console.log('Dashboard forzado actualizado:', {
+        numeroPacientes,
+        citasTotales,
+        citasHoy
+    });
+}
+
+// Hacer la función disponible globalmente
+window.actualizarDashboard = actualizarDashboard; 
