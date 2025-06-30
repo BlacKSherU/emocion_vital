@@ -404,9 +404,23 @@ select[multiple] {
 /*Raya verde :V*/
 .custom-raya-verde {
     width: 33.33% !important;
+    height: 50% !important;
     margin: 0 auto !important;
     left: 0 !important;
     right: 0 !important;
+    top: 25% !important;
+}
+
+/* Forzar altura reducida para la franja verde en precios */
+.u-section-7 .u-shape-1.custom-raya-verde {
+    height: 50% !important;
+    top: 25% !important;
+}
+
+/* Regla adicional con máxima especificidad */
+section.u-section-7 div.u-shape-1.custom-raya-verde {
+    height: 50% !important;
+    top: 25% !important;
 }
 
 /* Estilos para grupos de botones */
@@ -502,8 +516,13 @@ h3 {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Estilos para responsive */
@@ -517,7 +536,7 @@ h3 {
         padding: 48px 0 0;
         box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
     }
-    
+
     .sidebar-sticky {
         position: relative;
         top: 0;
