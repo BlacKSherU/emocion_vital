@@ -190,7 +190,6 @@ function renderizarPacientes(pacientes) {
                 <td>${paciente.n_documento || ''}</td>
                 <td>${paciente.Telefono_paciente || ''}</td>
                 <td>
-                    <button class="btn btn-sm btn-info me-1" onclick="verHistorial('${paciente.n_documento || ''}')\">Historial</button>
                     <button class="btn btn-sm btn-warning me-1" onclick="editarPaciente('${paciente.n_documento || ''}')\">Editar</button>
                     <button class="btn btn-sm btn-danger" onclick="eliminarPaciente('${paciente.n_documento || ''}')\">Eliminar</button>
                 </td>
@@ -218,10 +217,37 @@ function filtrarPacientesBusqueda(valorBusqueda) {
     renderizarPacientes(filtrados);
 }
 
+// Variable global para almacenar archivos de historial médico
+let archivosHistorialMedico = {};
+
 // Funciones de utilidad
-function verHistorial(cedula) {
-    // Implementar lógica para ver historial
-    alert(`Viendo historial del paciente con cédula: ${cedula}`);
+function verHistorial(citaId) {
+    // Buscar la cita por ID
+    const cita = citasGlobal.find(c => c.id == citaId);
+    
+    if (!cita) {
+        alert('No se encontró la cita');
+        return;
+    }
+    
+    // Guardar el ID de la cita en el modal
+    document.getElementById('historial-cita-id').value = cita.id || '';
+    
+    // Mostrar información del archivo actual si existe
+    const archivoActualInfo = document.getElementById('archivo-actual-info');
+    if (cita.historiamedica_archivo) {
+        archivoActualInfo.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Archivo actual:</strong> ${cita.historiamedica_archivo}
+            </div>
+        `;
+    } else {
+        archivoActualInfo.innerHTML = '<span class="text-muted">No hay archivo cargado</span>';
+    }
+    
+    // Abrir el modal
+    const modal = new bootstrap.Modal(document.getElementById('historialMedicoModal'));
+    modal.show();
 }
 
 function editarPaciente(cedula) {
@@ -293,7 +319,7 @@ function renderizarCitas(citas) {
             <td>${cita.hora_consulta || cita.hora || ''}</td>
             <td>${cita.paciente_nombre || (cita.paciente && cita.paciente.primer_nombre ? cita.paciente.primer_nombre : '')}</td>
             <td>
-                <button class="btn btn-sm btn-info me-1" onclick="verDetallesCita('${cita.Fecha_primera_consulta || cita.fecha || ''}', '${cita.hora_consulta || cita.hora || ''}')">Detalles</button>
+                <button class="btn btn-sm btn-info me-1" onclick="verHistorial('${cita.id || ''}')">Historial</button>
                 <button class="btn btn-sm btn-warning me-1" onclick="editarCita('${cita.Fecha_primera_consulta || cita.fecha || ''}', '${cita.hora_consulta || cita.hora || ''}')">Editar</button>
                 <button class="btn btn-sm btn-danger" onclick="cancelarCita('${cita.Fecha_primera_consulta || cita.fecha || ''}', '${cita.hora_consulta || cita.hora || ''}')">Cancelar</button>
             </td>
@@ -690,5 +716,62 @@ function actualizarDashboard() {
     });
 }
 
-// Hacer la función disponible globalmente
-window.actualizarDashboard = actualizarDashboard; 
+// Función para guardar el archivo de historial médico
+async function guardarHistorialMedico() {
+    try {
+        const citaId = document.getElementById('historial-cita-id').value;
+        const archivoInput = document.getElementById('archivo-historial');
+        const archivo = archivoInput.files[0];
+        
+        if (!archivo) {
+            alert('Por favor seleccione un archivo');
+            return;
+        }
+        
+        // Validar que sea un archivo .docx
+        if (!archivo.name.toLowerCase().endsWith('.docx')) {
+            alert('Por favor seleccione solo archivos Word (.docx)');
+            return;
+        }
+        
+        // Crear FormData para enviar el archivo
+        const formData = new FormData();
+        formData.append('historiamedica_archivo', archivo);
+        
+        // Guardar el archivo en la variable global
+        archivosHistorialMedico[citaId] = {
+            nombre: archivo.name,
+            archivo: archivo,
+            fecha: new Date().toISOString()
+        };
+        
+        // Enviar a la API
+        const response = await fetch(`${API_BASE_URL}/citas/${citaId}/`, {
+            method: 'PATCH',
+            body: formData,
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('historialMedicoModal'));
+        modal.hide();
+        
+        // Mostrar mensaje de éxito
+        alert('Archivo de historial médico guardado correctamente');
+        
+        // Recargar las citas para mostrar el archivo actualizado
+        await cargarCitas();
+        
+    } catch (error) {
+        console.error('Error al guardar archivo de historial médico:', error);
+        alert('Error al guardar el archivo: ' + error.message);
+    }
+}
+
+// Hacer las funciones disponibles globalmente
+window.actualizarDashboard = actualizarDashboard;
+window.guardarHistorialMedico = guardarHistorialMedico; 
