@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Psicóloga</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{% static 'styles.css' %}">
 </head>         
 
@@ -67,35 +68,6 @@
                     <!-- Mensaje de bienvenida -->
                     <div class="alert alert-success" id="bienvenida-perfil" style="display: none;">
                         <strong>¡Bienvenido!</strong> Completa tu perfil para acceder a todas las funcionalidades.
-                    </div>
-                    
-                    <!-- Botón de debug temporal -->
-                    <div class="alert alert-info" id="debug-panel" style="display: block;">
-                        <strong>Debug:</strong> 
-                        <button type="button" class="btn btn-sm btn-warning" onclick="cargarDatosPerfil().then(() => { console.log('Datos del paciente ID 1 cargados exitosamente'); alert('Datos del paciente ID 1 cargados. Revisa la consola para más detalles.'); })">
-                            Cargar Paciente ID 1
-                        </button>
-                        <button type="button" class="btn btn-sm btn-success" onclick="verificarDatosPacienteID1()">
-                            Verificar Paciente ID 1
-                        </button>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="actualizarAccesoSecciones().then(() => { console.log('Estado del perfil actualizado'); alert('Estado del perfil verificado. Revisa la consola.'); })">
-                            Verificar Estado Perfil
-                        </button>
-                        <button type="button" class="btn btn-sm btn-info" onclick="probarAPI()">
-                            Probar API
-                        </button>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="mostrarInfoDebug()">
-                            Info Debug
-                        </button>
-                        <button type="button" class="btn btn-sm btn-dark" onclick="verificarUsuarioActual()">
-                            Verificar Usuario Actual
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="verificarPacienteExiste(11).then(p => { if(p) alert('Paciente encontrado: ' + p.n_documento); else alert('Paciente no encontrado'); })">
-                            Verificar Paciente 11
-                        </button>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="verificarPacienteExiste(11).then(p => { if(p) return crearUsuarioNuevo(11, p.n_documento); else alert('Paciente 11 no encontrado'); }).then(() => alert('Usuario creado')).catch(e => alert('Error: ' + e.message))">
-                            Crear Usuario desde Paciente 11
-                        </button>
                     </div>
                     
                     <form class="row g-3" id="perfilForm">
@@ -263,7 +235,7 @@
                             <form class="row g-3">
                                 <div class="col-md-6">
                                     <label for="fecha" class="form-label">Fecha de la Visita</label>
-                                    <input type="date" class="form-control" id="fecha" required>
+                                    <input type="date" class="form-control" id="fecha" required min="">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="hora" class="form-label">Hora de la Visita</label>
@@ -462,7 +434,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="editar-fecha" class="form-label">Fecha de la Visita</label>
-                                <input type="date" class="form-control" id="editar-fecha" required>
+                                <input type="date" class="form-control" id="editar-fecha" required min="">
                             </div>
                             <div class="col-md-6">
                                 <label for="editar-hora" class="form-label">Hora de la Visita</label>

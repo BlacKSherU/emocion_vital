@@ -1,6 +1,39 @@
 // Configuración de la API
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
+// Función auxiliar para obtener el ID del paciente correcto
+async function obtenerIdPacienteCorrecto() {
+    const idUsuario = window.pacienteid || 1;
+    console.log('Obteniendo ID del paciente para usuario:', idUsuario);
+    
+    try {
+        // Primero intentar obtener el paciente directamente por ID
+        const pacienteDirecto = await apiRequest(`/pacientes/${idUsuario}/`);
+        console.log('Paciente encontrado directamente:', pacienteDirecto.id);
+        return pacienteDirecto.id;
+    } catch (error) {
+        if (error.message.includes('404')) {
+            console.log('Buscando paciente por usuario...');
+            // Si no se encuentra, buscar por usuario
+            const todosPacientes = await apiRequest('/pacientes/');
+            let pacientes = Array.isArray(todosPacientes) ? todosPacientes : 
+                          (todosPacientes.results ? todosPacientes.results : 
+                          (todosPacientes.data ? todosPacientes.data : []));
+            
+            const paciente = pacientes.find(p => p.user === idUsuario);
+            if (paciente) {
+                console.log('Paciente encontrado por usuario:', paciente.id);
+                return paciente.id;
+            } else {
+                console.error('No se encontró paciente para el usuario:', idUsuario);
+                return null;
+            }
+        } else {
+            throw error;
+        }
+    }
+}
+
 // Variable global para el estado del perfil
 let perfilCompleto = false;
 
@@ -212,6 +245,33 @@ function configurarFechaNacimiento() {
     }
 }
 
+// Función para configurar la fecha mínima en campos de citas
+function configurarFechaCitas() {
+    const camposFecha = ['fecha', 'editar-fecha'];
+    
+    camposFecha.forEach(campoId => {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            // Establecer la fecha mínima como hoy
+            const hoy = new Date();
+            const fechaMinima = hoy.toISOString().split('T')[0];
+            campo.setAttribute('min', fechaMinima);
+            
+            // Agregar evento para validar en tiempo real
+            campo.addEventListener('change', function() {
+                const fechaSeleccionada = new Date(this.value);
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0); // Resetear a medianoche para comparar solo fechas
+                
+                if (fechaSeleccionada < hoy) {
+                    alert('Por favor seleccione una fecha futura.');
+                    this.value = '';
+                }
+            });
+        }
+    });
+}
+
 // Función para validar campos de solo letras en tiempo real
 function configurarValidacionesLetras() {
     const camposLetras = [
@@ -382,6 +442,7 @@ const api = {
 document.addEventListener('DOMContentLoaded', function () {
     // Configurar validaciones
     configurarFechaNacimiento();
+    configurarFechaCitas();
     configurarValidacionesLetras();
     configurarValidacionesNumeros();
     configurarValidacionEdad();
@@ -590,6 +651,96 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // Agregar validación en tiempo real para fecha y hora
+        const fechaInput = document.querySelector('#fecha');
+        const horaSelect = document.querySelector('#hora');
+        const submitButton = citasForm.querySelector('button[type="submit"]');
+        let validacionTimeout;
+
+        // Función para validar disponibilidad en tiempo real
+        async function validarDisponibilidadTiempoReal() {
+            const fecha = fechaInput.value;
+            const hora = horaSelect.value;
+            
+            if (fecha && hora) {
+                // Mostrar indicador de validación
+                submitButton.disabled = true;
+                submitButton.textContent = 'Verificando disponibilidad...';
+                
+                try {
+                    const resultado = await validarDisponibilidad(fecha, hora);
+                    
+                    if (resultado.disponible) {
+                        // Horario disponible
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Agendar Cita';
+                        submitButton.className = 'btn btn-success';
+                        
+                        // Mostrar mensaje de éxito temporal
+                        mostrarMensajeValidacion('Horario disponible', 'success');
+                    } else {
+                        // Horario no disponible
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Horario No Disponible';
+                        submitButton.className = 'btn btn-danger';
+                        
+                        // Mostrar mensaje de error
+                        mostrarMensajeValidacion(resultado.mensaje, 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error en validación:', error);
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Agendar Cita';
+                    submitButton.className = 'btn btn-success';
+                    mostrarMensajeValidacion('Error al verificar disponibilidad', 'warning');
+                }
+            } else {
+                // Resetear botón si no hay fecha u hora seleccionada
+                submitButton.disabled = false;
+                submitButton.textContent = 'Agendar Cita';
+                submitButton.className = 'btn btn-success';
+            }
+        }
+
+        // Función para mostrar mensajes de validación
+        function mostrarMensajeValidacion(mensaje, tipo) {
+            // Remover mensaje anterior si existe
+            const mensajeAnterior = document.getElementById('mensaje-validacion');
+            if (mensajeAnterior) {
+                mensajeAnterior.remove();
+            }
+            
+            // Crear nuevo mensaje
+            const mensajeElement = document.createElement('div');
+            mensajeElement.id = 'mensaje-validacion';
+            mensajeElement.className = `alert alert-${tipo} alert-dismissible fade show mt-2`;
+            mensajeElement.innerHTML = `
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insertar después del formulario
+            citasForm.appendChild(mensajeElement);
+            
+            // Auto-ocultar después de 5 segundos
+            setTimeout(() => {
+                if (mensajeElement.parentNode) {
+                    mensajeElement.remove();
+                }
+            }, 5000);
+        }
+
+        // Eventos para validación en tiempo real
+        fechaInput.addEventListener('change', function() {
+            clearTimeout(validacionTimeout);
+            validacionTimeout = setTimeout(validarDisponibilidadTiempoReal, 500);
+        });
+
+        horaSelect.addEventListener('change', function() {
+            clearTimeout(validacionTimeout);
+            validacionTimeout = setTimeout(validarDisponibilidadTiempoReal, 500);
+        });
+
         // Validar fecha y hora antes de enviar
         citasForm.addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -597,6 +748,26 @@ document.addEventListener('DOMContentLoaded', function () {
             // Verificar que el perfil esté completo
             if (!perfilCompleto) {
                 alert('Debes completar todos los datos del perfil antes de agendar citas.');
+                return;
+            }
+
+            const fecha = document.querySelector('#fecha').value;
+            const hora = document.querySelector('#hora').value;
+
+            // Validar que la fecha no sea anterior a hoy
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const fechaSeleccionada = new Date(fecha);
+
+            if (fechaSeleccionada < hoy) {
+                alert('Por favor seleccione una fecha futura');
+                return;
+            }
+
+            // Validar disponibilidad antes de crear la cita
+            const disponibilidad = await validarDisponibilidad(fecha, hora);
+            if (!disponibilidad.disponible) {
+                alert(disponibilidad.mensaje);
                 return;
             }
 
@@ -608,19 +779,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Mostrar indicador de carga
                 submitButton.disabled = true;
                 submitButton.textContent = 'Agendando...';
-
-                const fecha = document.querySelector('#fecha').value;
-                const hora = document.querySelector('#hora').value;
-
-                // Validar que la fecha no sea anterior a hoy
-                const hoy = new Date();
-                hoy.setHours(0, 0, 0, 0);
-                const fechaSeleccionada = new Date(fecha);
-
-                if (fechaSeleccionada < hoy) {
-                    alert('Por favor seleccione una fecha futura');
-                    return;
-                }
 
                 // Obtener los familiares seleccionados
                 const familiaresSeleccionados = document.querySelector('#tipo-consulta').value !== 'individual'
@@ -648,6 +806,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Limpiar el formulario
                 this.reset();
                 document.querySelector('#familiares').style.display = 'none';
+                
+                // Limpiar mensaje de validación
+                const mensajeValidacion = document.getElementById('mensaje-validacion');
+                if (mensajeValidacion) {
+                    mensajeValidacion.remove();
+                }
 
             } catch (error) {
                 console.error('Error completo:', error);
@@ -804,6 +968,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
+// Función para generar enlaces únicos de reunión
+function generarEnlaceReunion(citaId, fecha) {
+    // Generar un código único basado en el ID de la cita y la fecha
+    const fechaObj = new Date(fecha);
+    const codigo = `${citaId}-${fechaObj.getFullYear()}${(fechaObj.getMonth() + 1).toString().padStart(2, '0')}${fechaObj.getDate().toString().padStart(2, '0')}`;
+    return `https://meet.google.com/${codigo}-${Math.random().toString(36).substring(2, 8)}`;
+}
+
 // Modificar la función agregarCita para usar la API
 async function agregarCita(citaData) {
     try {
@@ -827,6 +999,9 @@ async function agregarCita(citaData) {
             ? `<p class="mb-1"><strong>Acompañantes:</strong> ${citaData.acompañantes.join(', ')}</p>`
             : '';
 
+        // Generar enlace único para la reunión
+        const enlaceReunion = generarEnlaceReunion(response.id || 'nueva', citaData.Fecha_primera_consulta);
+
         nuevaCita.innerHTML = `
             <div class="d-flex w-100 justify-content-between align-items-center">
                 <div>
@@ -834,6 +1009,11 @@ async function agregarCita(citaData) {
                     ${acompañantesInfo}
                     <p class="mb-1"><strong>Fecha:</strong> ${citaData.Fecha_primera_consulta} - <strong>Hora:</strong> ${citaData.hora_consulta}</p>
                     ${citaData.notas ? `<small class="text-muted"><strong>Notas:</strong> ${citaData.notas}</small>` : ''}
+                    <p class="mb-1">
+                        <a href="${enlaceReunion}" target="_blank" class="btn btn-sm btn-success">
+                            <i class="bi bi-camera-video"></i> Unirse a la Reunión
+                        </a>
+                    </p>
                 </div>
                 <div class="btn-group-vertical">
                     <button class="btn btn-sm btn-warning mb-1" onclick="editarCita(${response.id || 'nueva'})">Editar</button>
@@ -858,10 +1038,68 @@ async function agregarCita(citaData) {
 }
 
 // Función para validar disponibilidad de horario
-function validarDisponibilidad(fecha, hora) {
-    // Aquí se implementaría la lógica para verificar si el horario está disponible
-    // Por ahora retornamos true
-    return true;
+async function validarDisponibilidad(fecha, hora) {
+    try {
+        console.log(`Validando disponibilidad para ${fecha} a las ${hora}`);
+        
+        // Obtener todas las citas existentes
+        const response = await api.getCitas();
+        const citas = Array.isArray(response) ? response :
+            (response.results ? response.results :
+                (response.data ? response.data : []));
+        
+        // Filtrar citas para la fecha específica
+        const citasEnFecha = citas.filter(cita => {
+            const fechaCita = cita.Fecha_primera_consulta || cita.fecha;
+            return fechaCita === fecha;
+        });
+        
+        console.log(`Citas encontradas para ${fecha}:`, citasEnFecha);
+        
+        // Función auxiliar para normalizar formato de hora
+        function normalizarHora(horaString) {
+            if (!horaString) return '';
+            // Si tiene segundos (formato HH:MM:SS), extraer solo HH:MM
+            if (horaString.includes(':') && horaString.split(':').length === 3) {
+                return horaString.substring(0, 5);
+            }
+            // Si ya está en formato HH:MM, devolver tal como está
+            return horaString;
+        }
+        
+        // Normalizar la hora que queremos validar
+        const horaNormalizada = normalizarHora(hora);
+        console.log(`Hora a validar (normalizada): ${horaNormalizada}`);
+        
+        // Verificar si ya existe una cita con la misma hora
+        const citaExistente = citasEnFecha.find(cita => {
+            const horaCita = cita.hora_consulta || cita.hora;
+            const horaCitaNormalizada = normalizarHora(horaCita);
+            console.log(`Comparando: ${horaNormalizada} vs ${horaCitaNormalizada} (original: ${horaCita})`);
+            return horaCitaNormalizada === horaNormalizada;
+        });
+        
+        if (citaExistente) {
+            console.log(`❌ Ya existe una cita para ${fecha} a las ${horaNormalizada}`);
+            return {
+                disponible: false,
+                mensaje: `Ya existe una cita programada para el ${fecha} a las ${horaNormalizada}. Por favor seleccione otro horario.`
+            };
+        }
+        
+        console.log(`✅ Horario disponible para ${fecha} a las ${horaNormalizada}`);
+        return {
+            disponible: true,
+            mensaje: 'Horario disponible'
+        };
+        
+    } catch (error) {
+        console.error('Error al validar disponibilidad:', error);
+        return {
+            disponible: false,
+            mensaje: 'Error al verificar disponibilidad. Intente nuevamente.'
+        };
+    }
 }
 
 // Función para cargar la lista de familiares
@@ -1179,6 +1417,9 @@ async function editarCita(id) {
         // Abrir el modal
         const modal = new bootstrap.Modal(document.getElementById('editarCitaModal'));
         modal.show();
+        
+        // Configurar la fecha mínima en el modal
+        configurarFechaCitas();
 
     } catch (error) {
         console.error('Error al editar cita:', error);
@@ -1256,6 +1497,13 @@ async function guardarEdicionCita() {
             return;
         }
 
+        // Validar disponibilidad (excluyendo la cita actual)
+        const disponibilidad = await validarDisponibilidadEdicion(citaId, fecha, hora);
+        if (!disponibilidad.disponible) {
+            alert(disponibilidad.mensaje);
+            return;
+        }
+
         // Obtener los familiares seleccionados
         const familiaresSeleccionados = tipoConsulta !== 'individual'
             ? Array.from(document.getElementById('editar-familiares').selectedOptions).map(option => option.value)
@@ -1295,6 +1543,71 @@ async function guardarEdicionCita() {
     }
 }
 
+// Función para validar disponibilidad excluyendo la cita actual (para edición)
+async function validarDisponibilidadEdicion(citaId, fecha, hora) {
+    try {
+        console.log(`Validando disponibilidad para edición - Cita ${citaId}, ${fecha} a las ${hora}`);
+        
+        // Obtener todas las citas existentes
+        const response = await api.getCitas();
+        const citas = Array.isArray(response) ? response :
+            (response.results ? response.results :
+                (response.data ? response.data : []));
+        
+        // Filtrar citas para la fecha específica, excluyendo la cita actual
+        const citasEnFecha = citas.filter(cita => {
+            const fechaCita = cita.Fecha_primera_consulta || cita.fecha;
+            return fechaCita === fecha && cita.id != citaId;
+        });
+        
+        console.log(`Citas encontradas para ${fecha} (excluyendo cita ${citaId}):`, citasEnFecha);
+        
+        // Función auxiliar para normalizar formato de hora
+        function normalizarHora(horaString) {
+            if (!horaString) return '';
+            // Si tiene segundos (formato HH:MM:SS), extraer solo HH:MM
+            if (horaString.includes(':') && horaString.split(':').length === 3) {
+                return horaString.substring(0, 5);
+            }
+            // Si ya está en formato HH:MM, devolver tal como está
+            return horaString;
+        }
+        
+        // Normalizar la hora que queremos validar
+        const horaNormalizada = normalizarHora(hora);
+        console.log(`Hora a validar (normalizada): ${horaNormalizada}`);
+        
+        // Verificar si ya existe una cita con la misma hora
+        const citaExistente = citasEnFecha.find(cita => {
+            const horaCita = cita.hora_consulta || cita.hora;
+            const horaCitaNormalizada = normalizarHora(horaCita);
+            console.log(`Comparando: ${horaNormalizada} vs ${horaCitaNormalizada} (original: ${horaCita})`);
+            return horaCitaNormalizada === horaNormalizada;
+        });
+        
+        if (citaExistente) {
+            console.log(`❌ Ya existe otra cita para ${fecha} a las ${horaNormalizada}`);
+            return {
+                disponible: false,
+                mensaje: `Ya existe otra cita programada para el ${fecha} a las ${horaNormalizada}. Por favor seleccione otro horario.`
+            };
+        }
+        
+        console.log(`✅ Horario disponible para edición - ${fecha} a las ${horaNormalizada}`);
+        return {
+            disponible: true,
+            mensaje: 'Horario disponible'
+        };
+        
+    } catch (error) {
+        console.error('Error al validar disponibilidad para edición:', error);
+        return {
+            disponible: false,
+            mensaje: 'Error al verificar disponibilidad. Intente nuevamente.'
+        };
+    }
+}
+
 // Modificar la función cargarDatosPerfil para mostrar correctamente los selects de dirección
 async function cargarDatosPerfil() {
     console.log('Cargando datos del perfil');
@@ -1320,21 +1633,48 @@ async function cargarDatosPerfil() {
         const idUsuario = window.pacienteid || 1;
         console.log('ID del usuario actual:', idUsuario);
         
-        // Intentar obtener los datos del paciente directamente
+        // Primero intentar obtener el paciente directamente por ID (en caso de que sea el ID del paciente)
         let datosPaciente = null;
         try {
             datosPaciente = await apiRequest(`/pacientes/${idUsuario}/`);
-            console.log('Paciente encontrado:', datosPaciente);
+            console.log('Paciente encontrado directamente por ID:', datosPaciente);
         } catch (error) {
             if (error.message.includes('404')) {
-                console.log('Paciente no encontrado, mostrando formulario vacío');
-                // Mostrar mensaje de bienvenida para nuevo usuario
-                if (bienvenidaElement) bienvenidaElement.style.display = 'block';
-                if (cargandoElement) cargandoElement.style.display = 'none';
+                console.log('No se encontró paciente con ese ID, intentando buscar por usuario...');
                 
-                // Cargar solo los estados para el formulario vacío
-                await cargarEstadosNacimiento();
-                return;
+                // Si no se encuentra, intentar buscar el paciente por el usuario
+                try {
+                    // Obtener todos los pacientes y buscar el que corresponda al usuario
+                    const todosPacientes = await apiRequest('/pacientes/');
+                    let pacientes = Array.isArray(todosPacientes) ? todosPacientes : 
+                                  (todosPacientes.results ? todosPacientes.results : 
+                                  (todosPacientes.data ? todosPacientes.data : []));
+                    
+                    // Buscar el paciente que tenga el usuario con el ID proporcionado
+                    datosPaciente = pacientes.find(p => p.user === idUsuario);
+                    
+                    if (datosPaciente) {
+                        console.log('Paciente encontrado por usuario:', datosPaciente);
+                    } else {
+                        console.log('No se encontró paciente para el usuario:', idUsuario);
+                        // Mostrar mensaje de bienvenida para nuevo usuario
+                        if (bienvenidaElement) bienvenidaElement.style.display = 'block';
+                        if (cargandoElement) cargandoElement.style.display = 'none';
+                        
+                        // Cargar solo los estados para el formulario vacío
+                        await cargarEstadosNacimiento();
+                        return;
+                    }
+                } catch (error2) {
+                    console.error('Error al buscar paciente por usuario:', error2);
+                    // Mostrar mensaje de bienvenida para nuevo usuario
+                    if (bienvenidaElement) bienvenidaElement.style.display = 'block';
+                    if (cargandoElement) cargandoElement.style.display = 'none';
+                    
+                    // Cargar solo los estados para el formulario vacío
+                    await cargarEstadosNacimiento();
+                    return;
+                }
             } else {
                 throw error;
             }
@@ -1356,44 +1696,78 @@ async function cargarDatosPerfil() {
                 // Cargar estados primero
                 await cargarEstadosNacimiento();
                 
-                // Seleccionar estado
-                const estadoSel = document.getElementById('estadoNacimiento');
-                if (estadoSel && direccion.estado) {
-                    estadoSel.value = String(direccion.estado);
-                    console.log('Estado seleccionado:', direccion.estado);
-                    
-                    // Cargar municipios para este estado
-                    await cargarMunicipiosNacimiento(direccion.estado);
-                    
-                    // Seleccionar municipio
-                    const municipioSel = document.getElementById('municipioNacimiento');
-                    if (municipioSel && direccion.municipio) {
-                        municipioSel.value = String(direccion.municipio);
-                        console.log('Municipio seleccionado:', direccion.municipio);
+                // Seleccionar estado con retraso para asegurar que el select esté cargado
+                setTimeout(async () => {
+                    const estadoSel = document.getElementById('estadoNacimiento');
+                    if (estadoSel && direccion.estado) {
+                        // Asegurar que el valor sea string
+                        const estadoValue = String(direccion.estado);
+                        estadoSel.value = estadoValue;
+                        console.log('Estado seleccionado:', estadoValue);
                         
-                        // Cargar parroquias para este municipio
-                        await cargarParroquiasNacimiento(direccion.municipio);
-                        
-                        // Seleccionar parroquia
-                        const parroquiaSel = document.getElementById('parroquiaNacimiento');
-                        if (parroquiaSel && direccion.parroquia) {
-                            parroquiaSel.value = String(direccion.parroquia);
-                            console.log('Parroquia seleccionada:', direccion.parroquia);
+                        // Verificar que se haya establecido correctamente
+                        if (estadoSel.value === estadoValue) {
+                            console.log('Estado establecido correctamente');
+                            
+                            // Disparar evento change para cargar municipios
+                            estadoSel.dispatchEvent(new Event('change'));
+                            
+                            // Cargar municipios para este estado
+                            await cargarMunicipiosNacimiento(direccion.estado);
+                            
+                            // Seleccionar municipio con retraso
+                            setTimeout(async () => {
+                                const municipioSel = document.getElementById('municipioNacimiento');
+                                if (municipioSel && direccion.municipio) {
+                                    const municipioValue = String(direccion.municipio);
+                                    municipioSel.value = municipioValue;
+                                    console.log('Municipio seleccionado:', municipioValue);
+                                    
+                                    // Disparar evento change para cargar parroquias
+                                    municipioSel.dispatchEvent(new Event('change'));
+                                    
+                                    // Cargar parroquias para este municipio
+                                    await cargarParroquiasNacimiento(direccion.municipio);
+                                    
+                                    // Seleccionar parroquia con retraso
+                                    setTimeout(() => {
+                                        const parroquiaSel = document.getElementById('parroquiaNacimiento');
+                                        if (parroquiaSel && direccion.parroquia) {
+                                            const parroquiaValue = String(direccion.parroquia);
+                                            parroquiaSel.value = parroquiaValue;
+                                            console.log('Parroquia seleccionada:', parroquiaValue);
+                                        }
+                                    }, 100);
+                                }
+                            }, 100);
+                            
+                            // Cargar ciudades para este estado
+                            await cargarCiudadesNacimiento(direccion.estado);
+                            
+                            // Seleccionar ciudad con retraso
+                            setTimeout(() => {
+                                const ciudadSel = document.getElementById('ciudadNacimiento');
+                                if (ciudadSel && direccion.ciudad) {
+                                    const ciudadValue = String(direccion.ciudad);
+                                    ciudadSel.value = ciudadValue;
+                                    console.log('Ciudad seleccionada:', ciudadValue);
+                                }
+                            }, 100);
+                        } else {
+                            console.warn('No se pudo establecer el estado correctamente');
+                            // Intentar nuevamente después de un breve retraso
+                            setTimeout(() => {
+                                estadoSel.value = estadoValue;
+                                console.log('Reintento de selección de estado:', estadoValue);
+                            }, 200);
                         }
                     }
-                    
-                    // Cargar ciudades para este estado
-                    await cargarCiudadesNacimiento(direccion.estado);
-                    
-                    // Seleccionar ciudad
-                    const ciudadSel = document.getElementById('ciudadNacimiento');
-                    if (ciudadSel && direccion.ciudad) {
-                        ciudadSel.value = String(direccion.ciudad);
-                        console.log('Ciudad seleccionada:', direccion.ciudad);
-                    }
-                }
+                }, 100);
+                
             } catch (error) {
                 console.error('Error al cargar la dirección principal:', error);
+                // Si hay error, cargar solo los estados
+                await cargarEstadosNacimiento();
             }
         } else {
             // Si no hay dirección principal, cargar solo los estados
@@ -1501,6 +1875,11 @@ async function cargarDatosPerfil() {
         // Actualizar el estado de acceso a las secciones después de cargar los datos
         await actualizarAccesoSecciones();
         
+        // Verificar que el estado se haya seleccionado correctamente
+        setTimeout(() => {
+            verificarSeleccionEstado();
+        }, 500);
+        
         // Ocultar mensaje de carga
         if (cargandoElement) cargandoElement.style.display = 'none';
         
@@ -1566,6 +1945,9 @@ function habilitarNavegacion() {
 window.addEventListener('load', function () {
     const idUsuario = window.pacienteid || 1;
     console.log('Página cargada, iniciando carga de datos del usuario ID:', idUsuario);
+    
+    // Configurar fechas de citas
+    configurarFechaCitas();
     
     // Mostrar información de debug
     mostrarInfoDebug();
@@ -1677,6 +2059,9 @@ async function cargarCitas() {
                 ? `<p class="mb-1"><strong>Acompañantes:</strong> ${cita.acompañantes.join(', ')}</p>`
                 : '';
 
+            // Generar enlace único para la reunión
+            const enlaceReunion = generarEnlaceReunion(cita.id, cita.Fecha_primera_consulta);
+
             citaElement.innerHTML = `
                 <div class="d-flex w-100 justify-content-between align-items-center">
                     <div>
@@ -1684,6 +2069,11 @@ async function cargarCitas() {
                         ${acompañantesInfo}
                         <p class="mb-1"><strong>Fecha:</strong> ${cita.Fecha_primera_consulta} - <strong>Hora:</strong> ${cita.hora_consulta}</p>
                         ${cita.notas ? `<small class="text-muted"><strong>Notas:</strong> ${cita.notas}</small>` : ''}
+                        <p class="mb-1">
+                            <a href="${enlaceReunion}" target="_blank" class="btn btn-sm btn-success">
+                                <i class="bi bi-camera-video"></i> Unirse a la Reunión
+                            </a>
+                        </p>
                     </div>
                     <div class="btn-group-vertical">
                         <button class="btn btn-sm btn-warning mb-1" onclick="editarCita(${cita.id})">Editar</button>
@@ -1754,28 +2144,54 @@ async function obtenerTodosLosEstados() {
 // Lógica para selects encadenados de lugar de nacimiento y creación de dirección
 async function cargarEstadosNacimiento() {
     try {
+        console.log('Iniciando carga de estados de nacimiento...');
         let estados = [];
+        
         // Primera página sin parámetro page
         const urlPrimera = '/estados/';
         const responsePrimera = await apiRequest(urlPrimera);
-        let batchPrimera = Array.isArray(responsePrimera) ? responsePrimera : (responsePrimera.results ? responsePrimera.results : (responsePrimera.data ? responsePrimera.data : []));
+        let batchPrimera = Array.isArray(responsePrimera) ? responsePrimera : 
+                          (responsePrimera.results ? responsePrimera.results : 
+                          (responsePrimera.data ? responsePrimera.data : []));
         estados = estados.concat(batchPrimera);
+        console.log('Estados de la primera página:', batchPrimera.length);
+        
         // Siguientes páginas con page=2, page=3
         for (let page = 2; page <= 3; page++) {
             const url = `/estados/?page=${page}`;
             const response = await apiRequest(url);
-            let batch = Array.isArray(response) ? response : (response.results ? response.results : (response.data ? response.data : []));
+            let batch = Array.isArray(response) ? response : 
+                       (response.results ? response.results : 
+                       (response.data ? response.data : []));
             estados = estados.concat(batch);
+            console.log(`Estados de la página ${page}:`, batch.length);
         }
+        
+        console.log('Total de estados obtenidos:', estados.length);
+        
         const select = document.getElementById('estadoNacimiento');
         if (select) {
+            // Limpiar el select
             select.innerHTML = '<option value="">Seleccione un estado...</option>';
+            
+            // Agregar las opciones
             estados.forEach(estado => {
                 const option = document.createElement('option');
                 option.value = estado.id_estado || estado.id || '';
                 option.textContent = estado.estado || '';
                 select.appendChild(option);
             });
+            
+            console.log('Estados cargados en el select:', select.options.length - 1);
+            
+            // Verificar si hay un valor seleccionado previamente
+            if (select.value) {
+                console.log('Estado previamente seleccionado:', select.value);
+                // Disparar evento change para cargar municipios si es necesario
+                select.dispatchEvent(new Event('change'));
+            }
+        } else {
+            console.error('No se encontró el elemento select de estados');
         }
     } catch (error) {
         console.error('Error al cargar estados:', error);
@@ -2396,3 +2812,37 @@ async function buscarUsuarioPorId(id) {
     }
 }
 // ... existing code ... 
+
+// Función para verificar y corregir la selección del estado
+function verificarSeleccionEstado() {
+    const estadoSel = document.getElementById('estadoNacimiento');
+    if (!estadoSel) {
+        console.error('No se encontró el select de estado');
+        return;
+    }
+    
+    console.log('Verificando selección del estado...');
+    console.log('Valor actual del estado:', estadoSel.value);
+    console.log('Opciones disponibles:', estadoSel.options.length);
+    
+    // Si hay un valor pero no se está mostrando correctamente
+    if (estadoSel.value && estadoSel.value !== '') {
+        // Verificar si la opción existe
+        const opcionSeleccionada = estadoSel.querySelector(`option[value="${estadoSel.value}"]`);
+        if (opcionSeleccionada) {
+            console.log('Estado seleccionado correctamente:', opcionSeleccionada.textContent);
+        } else {
+            console.warn('El valor del estado no coincide con ninguna opción disponible');
+            // Intentar encontrar una opción que coincida
+            for (let i = 0; i < estadoSel.options.length; i++) {
+                const option = estadoSel.options[i];
+                if (option.value === estadoSel.value) {
+                    console.log('Estado encontrado en opciones:', option.textContent);
+                    break;
+                }
+            }
+        }
+    } else {
+        console.log('No hay estado seleccionado');
+    }
+}
