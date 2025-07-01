@@ -1,0 +1,598 @@
+/* CSS ACTUALIZADO - 2025-06-29 15:30 - FORZAR RECARGA */
+/* Variables de color */
+:root {
+    --color-verde-claro: #e8f5e9;
+    --color-verde-hover: #c8e6c9;
+    --color-verde-activo: #a5d6a7;
+    --color-verde-borde: #81c784;
+    --color-verde-texto: #2e7d32;
+}
+
+/* ESTILOS ORIGINALES RESTAURADOS */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e8f5e9 !important;
+    color: #333 !important;
+    font-size: 16px !important;
+}
+
+/* Sidebar RESTAURADO */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    background-color: #ffffff !important;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #2e7d32 !important;
+    padding: 1rem 1.5rem;
+    border-left: 3px solid transparent;
+}
+
+.sidebar .nav-link:hover {
+    color: #2e7d32 !important;
+    background-color: #c8e6c9 !important;
+    border-left: 3px solid #81c784 !important;
+}
+
+.sidebar .nav-link.active {
+    color: #2e7d32 !important;
+    background-color: #e8f5e9 !important;
+    border-left: 3px solid #81c784 !important;
+}
+
+/* Contenido principal RESTAURADO */
+main {
+    padding-top: 48px;
+    background-color: transparent !important;
+}
+
+.section-content {
+    background-color: #ffffff !important;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid #c8e6c9 !important;
+    color: #333 !important;
+}
+
+/* Títulos RESTAURADOS */
+h2,
+h3 {
+    color: #2e7d32 !important;
+    font-size: 24px !important;
+}
+
+/* Estilos generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #e8f5e9 !important;
+}
+
+/* Estilos del sidebar */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    background-color: #ffffff !important;
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #2e7d32 !important;
+    padding: 1rem 1.5rem;
+    border-left: 3px solid transparent;
+}
+
+.sidebar .nav-link:hover {
+    color: #2e7d32 !important;
+    background-color: #c8e6c9 !important;
+    border-left: 3px solid #81c784 !important;
+}
+
+.sidebar .nav-link.active {
+    color: #2e7d32 !important;
+    background-color: #e8f5e9 !important;
+    border-left: 3px solid #81c784 !important;
+}
+
+/* Estilos del contenido principal */
+main {
+    padding-top: 48px;
+}
+
+.section-content {
+    background-color: #ffffff !important;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid #c8e6c9 !important;
+}
+
+/* Estilos de los formularios */
+.form-label {
+    font-weight: 500;
+    color: #2e7d32 !important;
+}
+
+.form-control:focus {
+    border-color: #81c784 !important;
+    box-shadow: 0 0 0 0.2rem rgba(129, 199, 132, 0.25) !important;
+}
+
+.form-select:focus {
+    border-color: #81c784 !important;
+    box-shadow: 0 0 0 0.2rem rgba(129, 199, 132, 0.25) !important;
+}
+
+/* Estilos de los botones */
+.btn {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #2e7d32 !important;
+    border-color: #2e7d32 !important;
+}
+
+.btn-primary:hover {
+    background-color: #1b5e20 !important;
+    border-color: #1b5e20 !important;
+}
+
+.btn-success {
+    background-color: #2e7d32 !important;
+    border-color: #2e7d32 !important;
+}
+
+.btn-success:hover {
+    background-color: #1b5e20 !important;
+    border-color: #1b5e20 !important;
+}
+
+/* Estilos para las tarjetas de citas y familiares */
+.list-group-item {
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    border-color: #c8e6c9 !important;
+}
+
+.list-group-item:hover {
+    background-color: #e8f5e9 !important;
+}
+
+/* Estilos para los encabezados */
+h2,
+h3 {
+    color: #2e7d32 !important;
+}
+
+/* Estilos para elementos seleccionados */
+::selection {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+}
+
+/* Estilos para enlaces deshabilitados */
+.nav-link.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+    color: #6c757d !important;
+}
+
+.nav-link.disabled:hover {
+    color: #6c757d !important;
+    text-decoration: none;
+}
+
+/* Estilos para campos con validación */
+input:invalid,
+select:invalid {
+    border-color: #dc3545;
+}
+
+input:valid,
+select:valid {
+    border-color: #198754;
+}
+
+/* Estilos para mensajes de validación */
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+
+/* Estilos para campos de solo letras */
+input[pattern*="[A-Za-z"] {
+    text-transform: capitalize;
+}
+
+/* Estilos para campos de solo números */
+input[pattern*="[0-9]"] {
+    font-family: 'Courier New', monospace;
+}
+
+/* Estilos para el formulario de perfil */
+#perfilForm .form-control:focus,
+#perfilForm .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Estilos para indicadores de validación */
+.form-control.is-valid {
+    border-color: #198754;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.94-.94 2.89 2.89 2.89-2.89.94.94L4.12 9.62z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 1.4 1.4m0-1.4L5.8 6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Estilos para tooltips de validación */
+.form-control[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    z-index: 1000;
+    margin-top: -30px;
+    margin-left: 10px;
+}
+
+/* Estilos para el sidebar */
+.sidebar {
+    min-height: 100vh;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    margin: 0.125rem 0.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+.sidebar .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.sidebar .nav-link.disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.sidebar .nav-link.disabled:hover {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+/* Estilos para las secciones de contenido */
+.section-content {
+    padding: 2rem 0;
+}
+
+/* Estilos para los formularios */
+.form-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Estilos para los botones */
+.btn {
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para las listas de elementos */
+.list-group-item {
+    border-left: none;
+    border-right: none;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(2px);
+}
+
+/* Estilos para los modales */
+.modal-content {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Estilos para mensajes de alerta */
+.alert {
+    border-radius: 0.375rem;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para campos de fecha */
+input[type="date"] {
+    font-family: inherit;
+}
+
+/* Estilos para campos de número */
+input[type="number"] {
+    font-family: inherit;
+}
+
+/* Estilos para campos de teléfono */
+input[type="tel"] {
+    font-family: inherit;
+}
+
+/* Estilos para campos de email */
+input[type="email"] {
+    font-family: inherit;
+}
+
+/* Estilos para textareas */
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Estilos para selects múltiples */
+select[multiple] {
+    min-height: 120px;
+}
+
+/*Raya verde :V*/
+.custom-raya-verde {
+    width: 33.33% !important;
+    height: 50% !important;
+    margin: 0 auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 25% !important;
+}
+
+/* Forzar altura reducida para la franja verde en precios */
+.u-section-7 .u-shape-1.custom-raya-verde {
+    height: 50% !important;
+    top: 25% !important;
+}
+
+/* Regla adicional con máxima especificidad */
+section.u-section-7 div.u-shape-1.custom-raya-verde {
+    height: 50% !important;
+    top: 25% !important;
+}
+
+/* Estilos para grupos de botones */
+.btn-group-vertical .btn {
+    margin-bottom: 0.25rem;
+}
+
+.btn-group-vertical .btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Estilos para iconos en la navegación */
+.bi {
+    margin-right: 0.5rem;
+}
+
+/* Estilos para el contenedor principal */
+.container-fluid {
+    padding: 0;
+}
+
+/* Estilos para el contenido principal */
+main {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Estilos para el header de las secciones */
+h2 {
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+h3 {
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+}
+
+/* Estilos para campos requeridos */
+.form-label.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+/* Estilos para campos opcionales */
+.form-label.optional::after {
+    content: " (opcional)";
+    color: #6c757d;
+    font-size: 0.875em;
+    font-weight: normal;
+}
+
+/* Estilos para validación en tiempo real */
+.form-control.validating {
+    border-color: #ffc107;
+    background-color: #fff3cd;
+}
+
+/* Estilos para campos con error */
+.form-control.has-error {
+    border-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+/* Estilos para campos exitosos */
+.form-control.has-success {
+    border-color: #198754;
+    background-color: #d1e7dd;
+}
+
+/* Estilos para el estado de carga */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Estilos para responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 48px 0 0;
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    }
+
+    .sidebar-sticky {
+        position: relative;
+        top: 0;
+        height: calc(100vh - 48px);
+        padding-top: .5rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+}
+
+/* Estilos para mejorar la accesibilidad */
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+.btn:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+/* Estilos para mejorar la legibilidad */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    color: #212529;
+}
+
+/* Estilos para mejorar el contraste */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Estilos para mejorar la jerarquía visual */
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 500;
+}
+
+/* Estilos para mejorar la usabilidad */
+.form-control::placeholder {
+    color: #adb5bd;
+    opacity: 1;
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
