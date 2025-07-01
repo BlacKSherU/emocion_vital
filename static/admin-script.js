@@ -184,7 +184,7 @@ function editarPaciente(cedula) {
         return;
     }
     
-    // Llenar el formulario del modal con los datos del paciente
+    // Llenar el formulario del modal con los datos del pacientes
     document.getElementById('editar-paciente-id').value = paciente.id || '';
     document.getElementById('editar-paciente-nombre').value = [
         paciente.primer_nombre,
