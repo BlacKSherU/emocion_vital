@@ -44,11 +44,6 @@ document.addEventListener('DOMContentLoaded', function () {
         sections.forEach(section => {
             section.style.display = section.id === sectionId ? 'block' : 'none';
         });
-        
-        // Si se muestra el dashboard, actualizar los datos
-        if (sectionId === 'dashboard') {
-            cargarDatosDashboard();
-        }
     }
 
     // Agregar eventos click a los enlaces de navegación
@@ -71,9 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Inicializar gráficos
-    inicializarGraficos();
-
     // Buscar input de búsqueda en la sección de pacientes
     const inputBusqueda = document.querySelector('#pacientes input[type="text"]');
     if (inputBusqueda) {
@@ -83,78 +75,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Función para inicializar los gráficos
-function inicializarGraficos() {
-    // Gráfico de citas por psicólogo
-    const ctxCitas = document.getElementById('grafico-citas');
-    if (ctxCitas) {
-        new Chart(ctxCitas, {
-            type: 'bar',
-            data: {
-                labels: ['Dr. García', 'Dra. López', 'Dr. Martínez', 'Dra. Rodríguez'],
-                datasets: [{
-                    label: 'Citas por Psicólogo',
-                    data: [12, 19, 8, 15],
-                    backgroundColor: [
-                        'rgba(46, 125, 50, 0.8)',
-                        'rgba(129, 199, 132, 0.8)',
-                        'rgba(165, 214, 167, 0.8)',
-                        'rgba(200, 230, 201, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(46, 125, 50, 1)',
-                        'rgba(129, 199, 132, 1)',
-                        'rgba(165, 214, 167, 1)',
-                        'rgba(200, 230, 201, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
 
-    // Gráfico de ingresos mensuales
-    const ctxIngresos = document.getElementById('grafico-ingresos');
-    if (ctxIngresos) {
-        new Chart(ctxIngresos, {
-            type: 'line',
-            data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Ingresos Mensuales',
-                    data: [12000, 19000, 15000, 17000, 14000, 12500],
-                    fill: false,
-                    borderColor: 'rgb(46, 125, 50)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-}
 
 // Variable global para almacenar los pacientes cargados
 let pacientesGlobal = [];
-
-// Variables globales para el dashboard
-let numeroPacientes = 0;
-let citasTotales = 0;
-let citasHoy = 0;
 
 function cargarPacientes() {
     const listaPacientes = document.getElementById('lista-pacientes');
@@ -168,9 +92,6 @@ function cargarPacientes() {
             console.log('Pacientes procesados:', pacientes);
             pacientesGlobal = pacientes; // Guardar en variable global
             renderizarPacientes(pacientes);
-            
-            // Actualizar dashboard con los datos de pacientes
-            actualizarDashboardPacientes(pacientes, response);
         })
         .catch(error => {
             console.error('Error al cargar pacientes:', error);
@@ -235,14 +156,18 @@ function verHistorial(citaId) {
     
     // Mostrar información del archivo actual si existe
     const archivoActualInfo = document.getElementById('archivo-actual-info');
+    const archivoDescarga = document.getElementById('archivo-descarga');
+    
     if (cita.historiamedica_archivo) {
         archivoActualInfo.innerHTML = `
             <div class="alert alert-info">
                 <strong>Archivo actual:</strong> ${cita.historiamedica_archivo}
             </div>
         `;
+        archivoDescarga.style.display = 'block';
     } else {
         archivoActualInfo.innerHTML = '<span class="text-muted">No hay archivo cargado</span>';
+        archivoDescarga.style.display = 'none';
     }
     
     // Abrir el modal
@@ -299,9 +224,6 @@ function cargarCitas() {
             console.log('Citas procesadas:', citas);
             citasGlobal = citas; // Guardar en variable global
             renderizarCitas(citas);
-            
-            // Actualizar dashboard con los datos de citas
-            actualizarDashboardCitas(citas, response);
         })
         .catch(error => {
             console.error('Error al cargar citas:', error);
@@ -469,102 +391,9 @@ window.addEventListener('load', function () {
     console.log('Página cargada, iniciando carga de datos...');
     cargarPacientes();
     cargarCitas();
-    // Cargar dashboard después de un pequeño delay para asegurar que el DOM esté listo
-    setTimeout(cargarDatosDashboard, 1000);
 });
 
-// Función para cargar los datos del dashboard
-async function cargarDatosDashboard() {
-    try {
-        console.log('Cargando datos del dashboard...');
-        
-        // Cargar pacientes
-        const pacientesResponse = await apiRequest('/pacientes/');
-        numeroPacientes = pacientesResponse.count || 0;
-        console.log('Número de pacientes:', numeroPacientes);
-        
-        // Cargar citas
-        const citasResponse = await apiRequest('/citas/');
-        citasTotales = citasResponse.count || 0;
-        console.log('Citas totales:', citasTotales);
-        
-        // Obtener fecha de hoy
-        const hoy = new Date().toISOString().split('T')[0];
-        console.log('Fecha de hoy:', hoy);
-        
-        // Contar citas de hoy usando los campos específicos
-        let citas = Array.isArray(citasResponse) ? citasResponse :
-            (citasResponse.results ? citasResponse.results : 
-            (citasResponse.data ? citasResponse.data : []));
-        
-        citasHoy = citas.filter(cita => {
-            const fechaCita = cita.Fecha_primera_consulta;
-            return fechaCita === hoy;
-        }).length;
-        console.log('Citas de hoy:', citasHoy);
-        
-        // Actualizar elementos del dashboard
-        const totalPacientesElement = document.getElementById('total-pacientes');
-        const citasHoyElement = document.getElementById('citas-hoy');
-        const totalCitasElement = document.getElementById('total-citas');
-        
-        console.log('Elementos encontrados:', {
-            totalPacientes: !!totalPacientesElement,
-            citasHoy: !!citasHoyElement,
-            totalCitas: !!totalCitasElement
-        });
-        
-        // Establecer valores en los elementos
-        if (totalPacientesElement) {
-            totalPacientesElement.textContent = numeroPacientes.toString();
-            console.log('Establecido pacientes:', numeroPacientes);
-        }
-        
-        if (citasHoyElement) {
-            citasHoyElement.textContent = citasHoy.toString();
-            console.log('Establecido citas hoy:', citasHoy);
-        }
-        
-        if (totalCitasElement) {
-            totalCitasElement.textContent = citasTotales.toString();
-            console.log('Establecido total citas:', citasTotales);
-        }
-        
-        console.log('Dashboard actualizado con variables:', {
-            numeroPacientes,
-            citasTotales,
-            citasHoy
-        });
-        
-        // Verificar que se hayan establecido correctamente
-        console.log('Valores finales en el DOM:', {
-            pacientes: totalPacientesElement ? totalPacientesElement.textContent : 'no encontrado',
-            citasHoy: citasHoyElement ? citasHoyElement.textContent : 'no encontrado',
-            totalCitas: totalCitasElement ? totalCitasElement.textContent : 'no encontrado'
-        });
-        
-    } catch (error) {
-        console.error('Error al cargar datos del dashboard:', error);
-        
-        // Establecer valores por defecto en caso de error
-        numeroPacientes = 0;
-        citasTotales = 0;
-        citasHoy = 0;
-        
-        const elementos = {
-            'total-pacientes': '0',
-            'citas-hoy': '0', 
-            'total-citas': '0'
-        };
-        
-        Object.entries(elementos).forEach(([id, valor]) => {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                elemento.textContent = valor;
-            }
-        });
-    }
-}
+
 
 // Función para filtrar citas según los filtros del formulario
 function filtrarCitas() {
@@ -639,82 +468,7 @@ async function guardarEdicionPaciente() {
     }
 }
 
-// Función para actualizar solo la parte de pacientes del dashboard
-function actualizarDashboardPacientes(pacientes, response = null) {
-    try {
-        // Usar count de la respuesta directamente
-        const pacientesActivos = response && response.count ? response.count : pacientes.length;
-        
-        // Actualizar el elemento del dashboard
-        const totalPacientesElement = document.getElementById('total-pacientes');
-        if (totalPacientesElement) {
-            totalPacientesElement.textContent = pacientesActivos;
-        }
-        
-        console.log('Dashboard pacientes actualizado:', { pacientesActivos });
-    } catch (error) {
-        console.error('Error al actualizar dashboard pacientes:', error);
-    }
-}
 
-// Función para actualizar solo la parte de citas del dashboard
-function actualizarDashboardCitas(citas, response = null) {
-    try {
-        // Obtener fecha de hoy en formato YYYY-MM-DD
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        // Contar citas de hoy
-        const citasHoy = citas.filter(cita => {
-            const fechaCita = cita.Fecha_primera_consulta || cita.fecha;
-            return fechaCita === hoy;
-        }).length;
-        
-        // Usar count de la respuesta directamente para total de citas
-        const totalCitas = response && response.count ? response.count : citas.length;
-        
-        // Actualizar los elementos del dashboard
-        const citasHoyElement = document.getElementById('citas-hoy');
-        const totalCitasElement = document.getElementById('total-citas');
-        
-        if (citasHoyElement) {
-            citasHoyElement.textContent = citasHoy;
-        }
-        
-        if (totalCitasElement) {
-            totalCitasElement.textContent = totalCitas;
-        }
-        
-        console.log('Dashboard citas actualizado:', { citasHoy, totalCitas });
-    } catch (error) {
-        console.error('Error al actualizar dashboard citas:', error);
-    }
-}
-
-// Función para forzar la actualización del dashboard
-function actualizarDashboard() {
-    console.log('Forzando actualización del dashboard...');
-    const totalPacientesElement = document.getElementById('total-pacientes');
-    const citasHoyElement = document.getElementById('citas-hoy');
-    const totalCitasElement = document.getElementById('total-citas');
-    
-    if (totalPacientesElement) {
-        totalPacientesElement.textContent = numeroPacientes.toString();
-    }
-    
-    if (citasHoyElement) {
-        citasHoyElement.textContent = citasHoy.toString();
-    }
-    
-    if (totalCitasElement) {
-        totalCitasElement.textContent = citasTotales.toString();
-    }
-    
-    console.log('Dashboard forzado actualizado:', {
-        numeroPacientes,
-        citasTotales,
-        citasHoy
-    });
-}
 
 // Función para guardar el archivo de historial médico
 async function guardarHistorialMedico() {
@@ -772,6 +526,49 @@ async function guardarHistorialMedico() {
     }
 }
 
+// Función para descargar el archivo de historial médico
+async function descargarHistorial() {
+    try {
+        const citaId = document.getElementById('historial-cita-id').value;
+        const cita = citasGlobal.find(c => c.id == citaId);
+        
+        if (!cita || !cita.historiamedica_archivo) {
+            alert('No hay archivo para descargar');
+            return;
+        }
+        
+        // Verificar primero si el archivo existe haciendo una petición HEAD
+        const response = await fetch(`${API_BASE_URL}/citas/${citaId}/descargar_historial/`, {
+            method: 'HEAD',
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                alert('El archivo no existe en el servidor');
+            } else {
+                alert('Error al verificar el archivo: ' + response.statusText);
+            }
+            return;
+        }
+        
+        // Si el archivo existe, proceder con la descarga
+        const link = document.createElement('a');
+        link.href = `${API_BASE_URL}/citas/${citaId}/descargar_historial/`;
+        link.download = cita.historiamedica_archivo;
+        link.target = '_blank';
+        
+        // Simular clic en el enlace
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+    } catch (error) {
+        console.error('Error al descargar archivo:', error);
+        alert('Error al descargar el archivo: ' + error.message);
+    }
+}
+
 // Hacer las funciones disponibles globalmente
-window.actualizarDashboard = actualizarDashboard;
-window.guardarHistorialMedico = guardarHistorialMedico; 
+window.guardarHistorialMedico = guardarHistorialMedico;
+window.descargarHistorial = descargarHistorial; 

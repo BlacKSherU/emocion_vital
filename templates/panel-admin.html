@@ -22,23 +22,13 @@
                     </div>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#dashboard">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#pacientes">
+                            <a class="nav-link active" href="#pacientes">
                                 <i class="bi bi-person-lines-fill"></i> Gestión de Pacientes
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#citas">
                                 <i class="bi bi-calendar-check"></i> Gestión de Citas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#configuracion">
-                                <i class="bi bi-gear"></i> Configuración
                             </a>
                         </li>
                         <li class="nav-item">
@@ -52,39 +42,9 @@
 
             <!-- Contenido Principal -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-                <!-- Dashboard -->
-                <section id="dashboard" class="section-content">
-                    <h2 class="mb-4">Dashboard</h2>
-                    <div class="row">
-                        <div class="col-md-4 mb-4">
-                            <div class="card bg-verde-claro">
-                                <div class="card-body">
-                                    <h5 class="card-title">Pacientes Activos</h5>
-                                    <h2 class="card-text" id="total-pacientes">0</h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card bg-verde-claro">
-                                <div class="card-body">
-                                    <h5 class="card-title">Citas Hoy</h5>
-                                    <h2 class="card-text" id="citas-hoy">0</h2>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-4">
-                            <div class="card bg-verde-claro">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Citas</h5>
-                                    <h2 class="card-text" id="total-citas">0</h2>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
                 <!-- Gestión de Pacientes -->
-                <section id="pacientes" class="section-content" style="display: none;">
+                <section id="pacientes" class="section-content">
                     <h2 class="mb-4">Gestión de Pacientes</h2>
                     <div class="row">
                         <div class="col-12 mb-3">
@@ -151,63 +111,7 @@
                     </div>
                 </section>
 
-                <!-- Configuración -->
-                <section id="configuracion" class="section-content" style="display: none;">
-                    <h2 class="mb-4">Configuración</h2>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-body">
-                                    <h5 class="card-title">Configuración General</h5>
-                                    <form>
-                                        <div class="mb-3">
-                                            <label for="nombre-clinica" class="form-label">Nombre de la Clínica</label>
-                                            <input type="text" class="form-control" id="nombre-clinica">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="direccion" class="form-label">Dirección</label>
-                                            <input type="text" class="form-control" id="direccion">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="telefono" class="form-label">Teléfono</label>
-                                            <input type="tel" class="form-control" id="telefono">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="email" class="form-label">Correo Electrónico</label>
-                                            <input type="email" class="form-control" id="email">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card mb-4">
-                                <div class="card-body">
-                                    <h5 class="card-title">Configuración de Horarios</h5>
-                                    <form>
-                                        <div class="mb-3">
-                                            <label class="form-label">Horario de Atención</label>
-                                            <div class="row g-2">
-                                                <div class="col-md-6">
-                                                    <input type="time" class="form-control" placeholder="Hora inicio">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <input type="time" class="form-control" placeholder="Hora fin">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Duración de Citas (minutos)</label>
-                                            <input type="number" class="form-control" value="60">
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+
             </main>
         </div>
     </div>
@@ -335,6 +239,11 @@
                             <div id="archivo-actual-info" class="text-muted">
                                 No hay archivo cargado
                             </div>
+                            <div id="archivo-descarga" style="display: none;">
+                                <button type="button" class="btn btn-success btn-sm" onclick="descargarHistorial()">
+                                    <i class="bi bi-download"></i> Descargar Archivo
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -347,7 +256,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'admin-script.js' %}"></script>
 </body>
 
