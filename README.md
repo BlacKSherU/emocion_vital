@@ -53,13 +53,23 @@ DATABASES = {
 python manage.py migrate
 ```
 
-6. **Crea un superusuario (opcional, para acceder al panel de administración):**
+6. **Carga los estados y capitales (formato ISO) en la base de datos:**
+
+Ejecuta el siguiente script SQL en tu gestor de base de datos (por ejemplo, usando MySQL Workbench, phpMyAdmin o la línea de comandos):
+
+```sql
+source psicologia estados y capitales.sql;
+```
+
+Esto insertará todos los estados y capitales necesarios en formato ISO.
+
+7. **Crea un superusuario (opcional, para acceder al panel de administración):**
 
 ```bash
 python manage.py createsuperuser
 ```
 
-7. **Inicia el servidor de desarrollo:**
+8. **Inicia el servidor de desarrollo:**
 
 ```bash
 python manage.py runserver
