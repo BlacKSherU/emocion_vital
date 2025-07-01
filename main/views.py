@@ -2,12 +2,31 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from oswald_api.models import Pacientes, Familiar, Cita
 from django.contrib import messages
 from django.contrib.messages import get_messages
 import copy
 from datetime import date
 import re
+from functools import wraps
+
+
+def superuser_required(view_func):
+    """
+    Decorador personalizado que verifica si el usuario está autenticado y es superusuario.
+    Si no cumple las condiciones, redirige al login de administrador.
+    """
+
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect("admin_login")
+        if not request.user.is_superuser:
+            return redirect("admin_login")
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
 
 
 def home(request: HttpRequest):
@@ -366,9 +385,44 @@ def paciente(request: HttpRequest):
     return render(request, "panel-psicologa.html", {"pacienteid": paciente.id})
 
 
+def admin_login(request: HttpRequest):
+    """
+    Vista de login específica para administradores (superusuarios)
+    """
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None and user.is_superuser:
+            login(request, user)
+            return redirect("psicologa")
+        elif user is not None and not user.is_superuser:
+            messages.error(
+                request,
+                "Acceso denegado. Solo administradores pueden acceder.",
+                "error",
+            )
+        else:
+            messages.error(request, "Credenciales inválidas", "error")
+
+    return render(request, "admin-login.html")
+
+
+@superuser_required
 def psicologa(request: HttpRequest):
     pacienteid = request.user.id
     return render(request, "panel-admin.html", {"pacienteid": pacienteid})
+
+
+def cerrar_sesion(request: HttpRequest):
+    """
+    Vista para cerrar sesión y redirigir al home
+    """
+    logout(request)
+    messages.success(request, "Sesión cerrada exitosamente", "success")
+    return redirect("home")
 
 
 def test_static(request: HttpRequest):
