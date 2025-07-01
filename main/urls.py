@@ -6,13 +6,12 @@ urlpatterns = [
     path("consultas", views.consultas, name="consultas"),
     path("precios", views.precios, name="precios"),
     path("conoce", views.conoce, name="conoce"),
-    path("perfil", views.perfil, name="perfil"),
-    path("perfil/formdatos", views.perfil_personal, name="perfil_formdatos"),
-    path("perfil/agregarfamiliar", views.agregarFamiliar, name="agregarFamiliar"),
-    path("perfil/agendarcita", views.agendarcita, name="agendarcita"),
     path("login", views.iniciar_sesion, name="login"),
     path("registro", views.registro, name="registro"),
     path("recuperar", views.recuperar, name="recuperar"),
+    path("paciente", views.paciente, name="paciente"),
+    path("psicologa", views.psicologa, name="psicologa"),
+    path("test-static", views.test_static, name="test_static"),
 ]
 
 # Wire up our API using automatic URL routing.

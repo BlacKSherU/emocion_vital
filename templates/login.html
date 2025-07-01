@@ -76,6 +76,32 @@
         .login-btn:hover {
             background: #8fc98b;
         }
+
+        .back-link a {
+            color: #4a7c59;
+            text-decoration: underline;
+            font-size: 1rem;
+        }
+
+        .documento-container {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+            margin-bottom: 1.5rem;
+        }
+
+        .tipo-documento {
+            flex: 0 0 80px;
+        }
+
+        .numero-documento {
+            flex: 1;
+        }
+
+        .documento-container .form-input {
+            margin-bottom: 0;
+            height: 100%;
+        }
     </style>
 </head>
 
@@ -106,8 +132,20 @@
         <div class="login-title">Inicia sesión</div>
         <form method="post">
             {% csrf_token %}
-            <label class="form-label" for="usuario">Cedula</label>
-            <input class="form-input" type="text" id="usuario" name="usuario" placeholder="Ingresa tu usuario" required>
+            <label class="form-label" for="tipo_documento">Documento de Identidad</label>
+            <div class="documento-container">
+                <div class="tipo-documento">
+                    <select class="form-input" id="tipo_documento" name="tipo_documento" required>
+                        <option value="">Tipo</option>
+                        <option value="V">V</option>
+                        <option value="E">E</option>
+                        <option value="J">J</option>
+                    </select>
+                </div>
+                <div class="numero-documento">
+                    <input class="form-input" type="text" id="cedula" name="cedula" placeholder="Número de documento" required>
+                </div>
+            </div>
 
             <label class="form-label" for="password">Contraseña</label>
             <input class="form-input" type="password" id="password" name="password" placeholder="Ingresa tu contraseña"
@@ -125,6 +163,39 @@
     </div>
     <script src="{% static 'js\jquery-3.7.1.min.js' %}"></script>
     <script src="{% static './bootstrap-5.3.3/js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        // Validar cédula en tiempo real
+        document.getElementById('cedula').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        
+        // Validar formulario antes de enviar
+        document.querySelector('form').addEventListener('submit', function(e) {
+            var tipoDocumento = document.getElementById('tipo_documento').value;
+            var cedula = document.getElementById('cedula').value;
+            var password = document.getElementById('password').value;
+            
+            if (!tipoDocumento) {
+                alert('Debes seleccionar el tipo de documento');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!cedula) {
+                alert('Debes ingresar el número de documento');
+                e.preventDefault();
+                return false;
+            }
+            
+            if (!password) {
+                alert('Debes ingresar tu contraseña');
+                e.preventDefault();
+                return false;
+            }
+            
+            return true;
+        });
+    </script>
 </body>
 
 </html>

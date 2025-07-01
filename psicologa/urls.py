@@ -17,14 +17,19 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("api.urls")),
+    path("api/", include("oswald_api.urls")),
     path("", include("main.urls")),
-    path("api-auth/", include("rest_framework.urls")),
 ]
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
+
+# Configuración para servir archivos media en desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

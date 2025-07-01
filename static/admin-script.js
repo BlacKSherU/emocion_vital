@@ -1,3 +1,38 @@
+// === INICIO: Función para peticiones a la API ===
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+async function apiRequest(endpoint, method = 'GET', data = null) {
+    try {
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            mode: 'cors',
+            credentials: 'include',
+        };
+        if (data) {
+            options.body = JSON.stringify(data);
+        }
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+        } else {
+            const text = await response.text();
+            return text ? JSON.parse(text) : {};
+        }
+    } catch (error) {
+        console.error('Error en la petición API:', error);
+        throw error;
+    }
+}
+// === FIN función apiRequest ===
+
 // Manejo de la navegación
 document.addEventListener('DOMContentLoaded', function () {
     // Obtener todos los enlaces de navegación
@@ -14,6 +49,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Agregar eventos click a los enlaces de navegación
     navLinks.forEach(link => {
         link.addEventListener('click', function (e) {
+            // Excluir el enlace de cerrar sesión
+            if (this.classList.contains('logout-link') || this.textContent.includes('Cerrar sesión')) {
+                return; // Permitir el comportamiento normal del enlace
+            }
+            
             e.preventDefault();
             const sectionId = this.getAttribute('href').substring(1);
 
@@ -26,165 +66,140 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Inicializar gráficos
-    inicializarGraficos();
+    // Buscar input de búsqueda en la sección de pacientes
+    const inputBusqueda = document.querySelector('#pacientes input[type="text"]');
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', function () {
+            filtrarPacientesBusqueda(this.value);
+        });
+    }
 });
 
-// Función para inicializar los gráficos
-function inicializarGraficos() {
-    // Gráfico de citas por psicólogo
-    const ctxCitas = document.getElementById('grafico-citas');
-    if (ctxCitas) {
-        new Chart(ctxCitas, {
-            type: 'bar',
-            data: {
-                labels: ['Dr. García', 'Dra. López', 'Dr. Martínez', 'Dra. Rodríguez'],
-                datasets: [{
-                    label: 'Citas por Psicólogo',
-                    data: [12, 19, 8, 15],
-                    backgroundColor: [
-                        'rgba(46, 125, 50, 0.8)',
-                        'rgba(129, 199, 132, 0.8)',
-                        'rgba(165, 214, 167, 0.8)',
-                        'rgba(200, 230, 201, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(46, 125, 50, 1)',
-                        'rgba(129, 199, 132, 1)',
-                        'rgba(165, 214, 167, 1)',
-                        'rgba(200, 230, 201, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
 
-    // Gráfico de ingresos mensuales
-    const ctxIngresos = document.getElementById('grafico-ingresos');
-    if (ctxIngresos) {
-        new Chart(ctxIngresos, {
-            type: 'line',
-            data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Ingresos Mensuales',
-                    data: [12000, 19000, 15000, 17000, 14000, 12500],
-                    fill: false,
-                    borderColor: 'rgb(46, 125, 50)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-}
 
-// Función para cargar la lista de psicólogos
-function cargarPsicologos() {
-    const listaPsicologos = document.getElementById('lista-psicologos');
-    if (!listaPsicologos) return;
+// Variable global para almacenar los pacientes cargados
+let pacientesGlobal = [];
 
-    // Datos de ejemplo
-    const psicologos = [
-        {
-            nombre: 'Dr. Juan García',
-            cedula: '12345',
-            especialidad: 'Psicología Clínica',
-            estado: 'Activo'
-        },
-        {
-            nombre: 'Dra. María López',
-            cedula: '67890',
-            especialidad: 'Terapia Familiar',
-            estado: 'Activo'
-        }
-    ];
-
-    // Generar HTML para la tabla
-    listaPsicologos.innerHTML = psicologos.map(psicologo => `
-        <tr>
-            <td>${psicologo.nombre}</td>
-            <td>${psicologo.cedula}</td>
-            <td>${psicologo.especialidad}</td>
-            <td><span class="badge bg-success">${psicologo.estado}</span></td>
-            <td>
-                <button class="btn btn-sm btn-warning me-1" onclick="editarPsicologo('${psicologo.cedula}')">Editar</button>
-                <button class="btn btn-sm btn-danger" onclick="eliminarPsicologo('${psicologo.cedula}')">Eliminar</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Función para cargar la lista de pacientes
 function cargarPacientes() {
     const listaPacientes = document.getElementById('lista-pacientes');
     if (!listaPacientes) return;
 
-    // Datos de ejemplo
-    const pacientes = [
-        {
-            nombre: 'Ana Martínez',
-            cedula: '12345678',
-            telefono: '555-0123',
-            psicologo: 'Dr. García',
-            ultimaCita: '2024-03-15'
-        }
-    ];
-
-    // Generar HTML para la tabla
-    listaPacientes.innerHTML = pacientes.map(paciente => `
-        <tr>
-            <td>${paciente.nombre}</td>
-            <td>${paciente.cedula}</td>
-            <td>${paciente.telefono}</td>
-            <td>${paciente.psicologo}</td>
-            <td>${paciente.ultimaCita}</td>
-            <td>
-                <button class="btn btn-sm btn-info me-1" onclick="verHistorial('${paciente.cedula}')">Historial</button>
-                <button class="btn btn-sm btn-warning me-1" onclick="editarPaciente('${paciente.cedula}')">Editar</button>
-                <button class="btn btn-sm btn-danger" onclick="eliminarPaciente('${paciente.cedula}')">Eliminar</button>
-            </td>
-        </tr>
-    `).join('');
+    apiRequest('/pacientes/')
+        .then(response => {
+            console.log('Respuesta cruda de la API /pacientes/:', response);
+            let pacientes = Array.isArray(response) ? response :
+                (response.results ? response.results : (response.data ? response.data : []));
+            console.log('Pacientes procesados:', pacientes);
+            pacientesGlobal = pacientes; // Guardar en variable global
+            renderizarPacientes(pacientes);
+        })
+        .catch(error => {
+            console.error('Error al cargar pacientes:', error);
+            listaPacientes.innerHTML = '<tr><td colspan="4" class="text-danger">Error al cargar los pacientes</td></tr>';
+        });
 }
 
-// Funciones de utilidad
-function editarPsicologo(cedula) {
-    // Implementar lógica de edición
-    alert(`Editando psicólogo con cédula: ${cedula}`);
-}
-
-function eliminarPsicologo(cedula) {
-    if (confirm('¿Está seguro de eliminar este psicólogo?')) {
-        // Implementar lógica de eliminación
-        alert(`Eliminando psicólogo con cédula: ${cedula}`);
+// Función para renderizar la tabla de pacientes
+function renderizarPacientes(pacientes) {
+    const listaPacientes = document.getElementById('lista-pacientes');
+    if (!listaPacientes) return;
+    listaPacientes.innerHTML = pacientes.map(paciente => {
+        console.log('Paciente a mostrar:', paciente);
+        return `
+            <tr>
+                <td>${[paciente.primer_nombre, paciente.segundo_nombre].filter(Boolean).join(' ')}</td>
+                <td>${paciente.n_documento || ''}</td>
+                <td>${paciente.Telefono_paciente || ''}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-1" onclick="editarPaciente('${paciente.n_documento || ''}')\">Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarPaciente('${paciente.n_documento || ''}')\">Eliminar</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    if (pacientes.length === 0) {
+        listaPacientes.innerHTML = '<tr><td colspan="4" class="text-muted">No hay pacientes registrados</td></tr>';
     }
 }
 
-function verHistorial(cedula) {
-    // Implementar lógica para ver historial
-    alert(`Viendo historial del paciente con cédula: ${cedula}`);
+// Función para filtrar pacientes según la búsqueda
+function filtrarPacientesBusqueda(valorBusqueda) {
+    const valor = valorBusqueda.trim().toLowerCase();
+    if (!valor) {
+        renderizarPacientes(pacientesGlobal);
+        return;
+    }
+    const filtrados = pacientesGlobal.filter(paciente => {
+        const nombre = [paciente.primer_nombre, paciente.segundo_nombre].filter(Boolean).join(' ').toLowerCase();
+        const cedula = (paciente.n_documento || '').toLowerCase();
+        const telefono = (paciente.Telefono_paciente || '').toLowerCase();
+        return nombre.includes(valor) || cedula.includes(valor) || telefono.includes(valor);
+    });
+    renderizarPacientes(filtrados);
+}
+
+// Variable global para almacenar archivos de historial médico
+let archivosHistorialMedico = {};
+
+// Funciones de utilidad
+function verHistorial(citaId) {
+    // Buscar la cita por ID
+    const cita = citasGlobal.find(c => c.id == citaId);
+    
+    if (!cita) {
+        alert('No se encontró la cita');
+        return;
+    }
+    
+    // Guardar el ID de la cita en el modal
+    document.getElementById('historial-cita-id').value = cita.id || '';
+    
+    // Mostrar información del archivo actual si existe
+    const archivoActualInfo = document.getElementById('archivo-actual-info');
+    const archivoDescarga = document.getElementById('archivo-descarga');
+    
+    if (cita.historiamedica_archivo) {
+        archivoActualInfo.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Archivo actual:</strong> ${cita.historiamedica_archivo}
+            </div>
+        `;
+        archivoDescarga.style.display = 'block';
+    } else {
+        archivoActualInfo.innerHTML = '<span class="text-muted">No hay archivo cargado</span>';
+        archivoDescarga.style.display = 'none';
+    }
+    
+    // Abrir el modal
+    const modal = new bootstrap.Modal(document.getElementById('historialMedicoModal'));
+    modal.show();
 }
 
 function editarPaciente(cedula) {
-    // Implementar lógica de edición
-    alert(`Editando paciente con cédula: ${cedula}`);
+    // Buscar el paciente en los pacientes globales
+    const paciente = pacientesGlobal.find(p => p.n_documento === cedula);
+    
+    if (!paciente) {
+        alert('No se encontró el paciente');
+        return;
+    }
+    
+    // Llenar el formulario del modal con los datos del paciente
+    document.getElementById('editar-paciente-id').value = paciente.id || '';
+    document.getElementById('editar-paciente-nombre').value = [
+        paciente.primer_nombre,
+        paciente.segundo_nombre
+    ].filter(n => n).join(' ');
+    document.getElementById('editar-paciente-apellido').value = [
+        paciente.primer_apellido,
+        paciente.segundo_apellido
+    ].filter(a => a).join(' ');
+    document.getElementById('editar-paciente-cedula').value = paciente.n_documento || '';
+    document.getElementById('editar-paciente-telefono').value = paciente.Telefono_paciente || '';
+    
+    // Abrir el modal
+    const modal = new bootstrap.Modal(document.getElementById('editarPacienteModal'));
+    modal.show();
 }
 
 function eliminarPaciente(cedula) {
@@ -194,92 +209,46 @@ function eliminarPaciente(cedula) {
     }
 }
 
-// Función para cargar la lista de citas
+// Variable global para almacenar las citas cargadas
+let citasGlobal = [];
+
 function cargarCitas() {
     const listaCitas = document.getElementById('lista-citas');
     if (!listaCitas) return;
 
-    // Datos de ejemplo
-    const citas = [
-        {
-            fecha: '2024-03-20',
-            hora: '09:00',
-            paciente: 'Ana Martínez',
-            psicologo: 'Dr. García',
-            estado: 'Pendiente'
-        },
-        {
-            fecha: '2024-03-20',
-            hora: '10:30',
-            paciente: 'Carlos Rodríguez',
-            psicologo: 'Dra. López',
-            estado: 'Completada'
-        },
-        {
-            fecha: '2024-03-20',
-            hora: '14:00',
-            paciente: 'María González',
-            psicologo: 'Dr. Martínez',
-            estado: 'Cancelada'
-        },
-        {
-            fecha: '2024-03-21',
-            hora: '11:00',
-            paciente: 'Juan Pérez',
-            psicologo: 'Dra. Rodríguez',
-            estado: 'Pendiente'
-        },
-        {
-            fecha: '2024-03-21',
-            hora: '15:30',
-            paciente: 'Laura Sánchez',
-            psicologo: 'Dr. García',
-            estado: 'Pendiente'
-        }
-    ];
+    apiRequest('/citas/')
+        .then(response => {
+            console.log('Respuesta cruda de la API /citas/:', response);
+            let citas = Array.isArray(response) ? response :
+                (response.results ? response.results : (response.data ? response.data : []));
+            console.log('Citas procesadas:', citas);
+            citasGlobal = citas; // Guardar en variable global
+            renderizarCitas(citas);
+        })
+        .catch(error => {
+            console.error('Error al cargar citas:', error);
+            listaCitas.innerHTML = '<tr><td colspan="4" class="text-danger">Error al cargar las citas</td></tr>';
+        });
+}
 
-    // Generar HTML para la tabla
+// Función para renderizar la tabla de citas
+function renderizarCitas(citas) {
+    const listaCitas = document.getElementById('lista-citas');
+    if (!listaCitas) return;
     listaCitas.innerHTML = citas.map(cita => `
         <tr>
-            <td>${cita.fecha}</td>
-            <td>${cita.hora}</td>
-            <td>${cita.paciente}</td>
-            <td>${cita.psicologo}</td>
+            <td>${cita.Fecha_primera_consulta || cita.fecha || ''}</td>
+            <td>${cita.hora_consulta || cita.hora || ''}</td>
+            <td>${cita.paciente_nombre || (cita.paciente && cita.paciente.primer_nombre ? cita.paciente.primer_nombre : '')}</td>
             <td>
-                <span class="badge ${getEstadoClass(cita.estado)}">${cita.estado}</span>
-            </td>
-            <td>
-                <button class="btn btn-sm btn-info me-1" onclick="verDetallesCita('${cita.fecha}', '${cita.hora}')">Detalles</button>
-                <button class="btn btn-sm btn-warning me-1" onclick="editarCita('${cita.fecha}', '${cita.hora}')">Editar</button>
-                <button class="btn btn-sm btn-danger" onclick="cancelarCita('${cita.fecha}', '${cita.hora}')">Cancelar</button>
+                <button class="btn btn-sm btn-info me-1" onclick="verHistorial('${cita.id || ''}')">Historial</button>
+                <button class="btn btn-sm btn-warning me-1" onclick="editarCita('${cita.Fecha_primera_consulta || cita.fecha || ''}', '${cita.hora_consulta || cita.hora || ''}')">Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="cancelarCita('${cita.Fecha_primera_consulta || cita.fecha || ''}', '${cita.hora_consulta || cita.hora || ''}')">Cancelar</button>
             </td>
         </tr>
     `).join('');
-
-    // Cargar opciones de psicólogos en el filtro
-    const filtroPsicologo = document.getElementById('filtro-psicologo');
-    if (filtroPsicologo) {
-        const psicologos = ['Dr. García', 'Dra. López', 'Dr. Martínez', 'Dra. Rodríguez'];
-        psicologos.forEach(psicologo => {
-            const option = document.createElement('option');
-            option.value = psicologo;
-            option.textContent = psicologo;
-            filtroPsicologo.appendChild(option);
-        });
-    }
-}
-
-// Función para obtener la clase CSS según el estado de la cita
-function getEstadoClass(estado) {
-    switch (estado.toLowerCase()) {
-        case 'pendiente':
-            return 'bg-warning';
-        case 'completada':
-            return 'bg-success';
-        case 'cancelada':
-            return 'bg-danger';
-        default:
-            return 'bg-secondary';
+    if (citas.length === 0) {
+        listaCitas.innerHTML = '<tr><td colspan="4" class="text-muted">No hay citas agendadas</td></tr>';
     }
 }
 
@@ -289,7 +258,126 @@ function verDetallesCita(fecha, hora) {
 }
 
 function editarCita(fecha, hora) {
-    alert(`Editando cita del ${fecha} a las ${hora}`);
+    // Buscar la cita en las citas globales
+    const cita = citasGlobal.find(c => 
+        (c.Fecha_primera_consulta || c.fecha) === fecha && 
+        (c.hora_consulta || c.hora) === hora
+    );
+    
+    if (!cita) {
+        alert('No se encontró la cita');
+        return;
+    }
+    
+    // Llenar el formulario del modal con los datos de la cita
+    document.getElementById('editar-cita-id').value = cita.id || '';
+    document.getElementById('editar-fecha').value = cita.Fecha_primera_consulta || cita.fecha || '';
+    document.getElementById('editar-hora').value = cita.hora_consulta || cita.hora || '';
+    document.getElementById('editar-modalidad').value = cita.modalidad || '';
+    document.getElementById('editar-notas').value = cita.notas || '';
+    
+    // Cargar pacientes en el selector
+    cargarPacientesEnSelector('editar-paciente', cita.paciente || cita.paciente_id);
+    
+    // Abrir el modal
+    const modal = new bootstrap.Modal(document.getElementById('editarCitaModal'));
+    modal.show();
+}
+
+// Función para cargar pacientes en un selector específico
+async function cargarPacientesEnSelector(selectorId, pacienteSeleccionado = null) {
+    try {
+        const pacientesResponse = await apiRequest('/pacientes/');
+        let pacientes = Array.isArray(pacientesResponse) ? pacientesResponse : 
+                       (pacientesResponse.results ? pacientesResponse.results : 
+                       (pacientesResponse.data ? pacientesResponse.data : []));
+        
+        const selectPacientes = document.getElementById(selectorId);
+        if (selectPacientes) {
+            selectPacientes.innerHTML = '<option value="">Seleccione paciente...</option>';
+            
+            pacientes.forEach(paciente => {
+                const nombreCompleto = [
+                    paciente.primer_nombre,
+                    paciente.segundo_nombre,
+                    paciente.primer_apellido,
+                    paciente.segundo_apellido
+                ].filter(n => n).join(' ');
+                
+                const option = document.createElement('option');
+                option.value = paciente.id || paciente.n_documento;
+                option.textContent = nombreCompleto || `Cédula: ${paciente.n_documento}`;
+                
+                // Seleccionar el paciente actual si se especifica
+                if (pacienteSeleccionado && (paciente.id == pacienteSeleccionado || paciente.n_documento == pacienteSeleccionado)) {
+                    option.selected = true;
+                }
+                
+                selectPacientes.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar pacientes en selector:', error);
+    }
+}
+
+// Función para guardar la edición de la cita
+async function guardarEdicionCita() {
+    try {
+        const citaId = document.getElementById('editar-cita-id').value;
+        const fecha = document.getElementById('editar-fecha').value;
+        const hora = document.getElementById('editar-hora').value;
+        const paciente = document.getElementById('editar-paciente').value;
+        const modalidad = document.getElementById('editar-modalidad').value;
+        const notas = document.getElementById('editar-notas').value;
+        
+        // Validar campos requeridos
+        if (!fecha || !hora || !paciente || !modalidad) {
+            alert('Por favor complete todos los campos requeridos');
+            return;
+        }
+        
+        // Validar que la fecha no sea anterior a hoy
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fechaSeleccionada = new Date(fecha);
+        
+        if (fechaSeleccionada < hoy) {
+            alert('Por favor seleccione una fecha futura');
+            return;
+        }
+        
+        // Estructura de datos para actualizar la cita
+        const citaData = {
+            Numero_historial: 1,
+            Fecha_primera_consulta: fecha,
+            hora_consulta: hora,
+            modalidad: modalidad,
+            tipo_consulta: 'individual', // Por defecto, se puede modificar si es necesario
+            notas: notas || "",
+            paciente: paciente,
+            acompañantes: []
+        };
+        
+        console.log('Datos de cita a actualizar:', citaData);
+        
+        // Actualizar la cita
+        await apiRequest(`/citas/${citaId}/`, 'PUT', citaData);
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editarCitaModal'));
+        modal.hide();
+        
+        // Mostrar mensaje de éxito
+        alert('Cita actualizada correctamente');
+        
+        // Recargar las citas
+        await cargarCitas();
+        
+    } catch (error) {
+        console.error('Error al guardar edición de la cita:', error);
+        alert('Error al guardar los cambios: ' + error.message);
+    }
 }
 
 function cancelarCita(fecha, hora) {
@@ -300,7 +388,187 @@ function cancelarCita(fecha, hora) {
 
 // Cargar datos iniciales
 window.addEventListener('load', function () {
-    cargarPsicologos();
+    console.log('Página cargada, iniciando carga de datos...');
     cargarPacientes();
     cargarCitas();
-}); 
+});
+
+
+
+// Función para filtrar citas según los filtros del formulario
+function filtrarCitas() {
+    const fecha = document.getElementById('filtro-fecha').value;
+    let filtradas = citasGlobal;
+    if (fecha) {
+        filtradas = filtradas.filter(cita => (cita.Fecha_primera_consulta || cita.fecha || '').startsWith(fecha));
+    }
+    renderizarCitas(filtradas);
+}
+
+// Agregar evento al formulario de filtros de citas
+window.addEventListener('DOMContentLoaded', function () {
+    const formFiltroCitas = document.querySelector('#citas form');
+    if (formFiltroCitas) {
+        formFiltroCitas.addEventListener('submit', function (e) {
+            e.preventDefault();
+            filtrarCitas();
+        });
+    }
+});
+
+// Función para guardar la edición del paciente
+async function guardarEdicionPaciente() {
+    try {
+        const pacienteId = document.getElementById('editar-paciente-id').value;
+        const nombreCompleto = document.getElementById('editar-paciente-nombre').value.trim();
+        const apellidoCompleto = document.getElementById('editar-paciente-apellido').value.trim();
+        const cedula = document.getElementById('editar-paciente-cedula').value;
+        const telefono = document.getElementById('editar-paciente-telefono').value;
+        
+        // Validar campos requeridos
+        if (!nombreCompleto || !apellidoCompleto || !cedula || !telefono) {
+            alert('Por favor complete todos los campos requeridos');
+            return;
+        }
+        
+        // Separar nombres y apellidos
+        const primerNombre = nombreCompleto.split(' ')[0] || null;
+        const segundoNombre = nombreCompleto.split(' ').slice(1).join(' ') || null;
+        const primerApellido = apellidoCompleto.split(' ')[0] || null;
+        const segundoApellido = apellidoCompleto.split(' ').slice(1).join(' ') || null;
+        
+        // Estructura de datos para actualizar el paciente
+        const pacienteData = {
+            primer_nombre: primerNombre,
+            segundo_nombre: segundoNombre,
+            primer_apellido: primerApellido,
+            segundo_apellido: segundoApellido,
+            n_documento: cedula,
+            Telefono_paciente: telefono
+        };
+        
+        console.log('Datos de paciente a actualizar:', pacienteData);
+        
+        // Actualizar el paciente
+        await apiRequest(`/pacientes/${pacienteId}/`, 'PUT', pacienteData);
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editarPacienteModal'));
+        modal.hide();
+        
+        // Mostrar mensaje de éxito
+        alert('Paciente actualizado correctamente');
+        
+        // Recargar los pacientes
+        await cargarPacientes();
+        
+    } catch (error) {
+        console.error('Error al guardar edición del paciente:', error);
+        alert('Error al guardar los cambios: ' + error.message);
+    }
+}
+
+
+
+// Función para guardar el archivo de historial médico
+async function guardarHistorialMedico() {
+    try {
+        const citaId = document.getElementById('historial-cita-id').value;
+        const archivoInput = document.getElementById('archivo-historial');
+        const archivo = archivoInput.files[0];
+        
+        if (!archivo) {
+            alert('Por favor seleccione un archivo');
+            return;
+        }
+        
+        // Validar que sea un archivo .docx
+        if (!archivo.name.toLowerCase().endsWith('.docx')) {
+            alert('Por favor seleccione solo archivos Word (.docx)');
+            return;
+        }
+        
+        // Crear FormData para enviar el archivo
+        const formData = new FormData();
+        formData.append('historiamedica_archivo', archivo);
+        
+        // Guardar el archivo en la variable global
+        archivosHistorialMedico[citaId] = {
+            nombre: archivo.name,
+            archivo: archivo,
+            fecha: new Date().toISOString()
+        };
+        
+        // Enviar a la API
+        const response = await fetch(`${API_BASE_URL}/citas/${citaId}/`, {
+            method: 'PATCH',
+            body: formData,
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        // Cerrar el modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('historialMedicoModal'));
+        modal.hide();
+        
+        // Mostrar mensaje de éxito
+        alert('Archivo de historial médico guardado correctamente');
+        
+        // Recargar las citas para mostrar el archivo actualizado
+        await cargarCitas();
+        
+    } catch (error) {
+        console.error('Error al guardar archivo de historial médico:', error);
+        alert('Error al guardar el archivo: ' + error.message);
+    }
+}
+
+// Función para descargar el archivo de historial médico
+async function descargarHistorial() {
+    try {
+        const citaId = document.getElementById('historial-cita-id').value;
+        const cita = citasGlobal.find(c => c.id == citaId);
+        
+        if (!cita || !cita.historiamedica_archivo) {
+            alert('No hay archivo para descargar');
+            return;
+        }
+        
+        // Verificar primero si el archivo existe haciendo una petición HEAD
+        const response = await fetch(`${API_BASE_URL}/citas/${citaId}/descargar_historial/`, {
+            method: 'HEAD',
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                alert('El archivo no existe en el servidor');
+            } else {
+                alert('Error al verificar el archivo: ' + response.statusText);
+            }
+            return;
+        }
+        
+        // Si el archivo existe, proceder con la descarga
+        const link = document.createElement('a');
+        link.href = `${API_BASE_URL}/citas/${citaId}/descargar_historial/`;
+        link.download = cita.historiamedica_archivo;
+        link.target = '_blank';
+        
+        // Simular clic en el enlace
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+    } catch (error) {
+        console.error('Error al descargar archivo:', error);
+        alert('Error al descargar el archivo: ' + error.message);
+    }
+}
+
+// Hacer las funciones disponibles globalmente
+window.guardarHistorialMedico = guardarHistorialMedico;
+window.descargarHistorial = descargarHistorial; 

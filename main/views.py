@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from api.models import Paciente, Familiar, Cita
+from oswald_api.models import Pacientes, Familiar, Cita
 from django.contrib import messages
 from django.contrib.messages import get_messages
 import copy
 from datetime import date
+import re
 
 
 def home(request: HttpRequest):
@@ -25,150 +26,23 @@ def conoce(request: HttpRequest):
     return render(request, "conoce.html")
 
 
-def agregarFamiliar(request: HttpRequest):
-    print(request.POST)
-    try:
-        User.objects.get(username=request.POST["familiar-cedula"])
-        existe = True
-    except User.DoesNotExist:
-        existe = False
-    if existe:
-        messages.warning(
-            request,
-            "ya esta registrada una persona con esa cedula nombre XXXXXXX",
-            "alguien con esa cedula ya esta registrado",
-        )
-    else:
-        user = User.objects.create_user(
-            username=request.POST["familiar-cedula"],
-            password=request.POST["familiar-cedula"],
-            first_name=request.POST["familiar-nombre"],
-            last_name=request.POST["familiar-apellido"],
-        )
-        paciente = Paciente.objects.create(
-            user=user, Feche_de_nacimiento=request.POST["familiar-fechaNacimiento"]
-        )
-        paciente.save()
-        familiar = Familiar.objects.create(
-            user1=request.user,
-            user2=user,
-            relacion=request.POST["familiar-parentesco"],
-        )
-        user = request.user
-        paciente = Paciente.objects.get(user=user)
-        paciente.familiares.add(familiar)
-        request.session["pantalla"] = "familiares"
-    return redirect("perfil")
-
-
-def perfil_personal(request: HttpRequest):
-    print(request.POST)
-    user = request.user
-    paciente = Paciente.objects.get(user=user)
-    user.first_name = request.POST["nombres"]
-    user.last_name = request.POST["apellidos"]
-    paciente.Feche_de_nacimiento = request.POST["fechaNacimiento"]
-    paciente.Lugar_de_nacimiento = request.POST["lugarNacimiento"]
-    paciente.Instruccion_paciente = request.POST["nivelInstruccion"]
-    paciente.Ocupacion_paciente = request.POST["ocupacion"]
-    user.username = request.POST["cedula"]
-    paciente.Telefono_paciente = request.POST["telefono"]
-    user.email = request.POST["correo"]
-    paciente.Estado_civil_paciente = request.POST["estadoCivil"]
-    paciente.Religion_paciente = request.POST["religion"]
-    paciente.Centros_estudios_trabajos = request.POST["centroTrabajo"]
-    paciente.Grado_paciente = request.POST["grado"]
-    paciente.Ciclo_paciente = request.POST["ciclo"]
-    paciente.Lugar_residencia_paciente = request.POST["lugarResidencia"]
-    paciente.sexo = request.POST["sexo"]
-    paciente.Cantidad_tiempo_residencia_paciente = request.POST["tiempoResidencia"]
-    paciente.Tiempo_residencia_paciente = request.POST["tiempoResidenciaUnidad"]
-    paciente.save()
-    user.save()
-    return redirect("perfil")
-
-
-def agendarcita(request: HttpRequest):
-    print(request.POST)
-    user = request.user
-    paciente = Paciente.objects.get(user=user)
-    cita = Cita.objects.create(
-        paciente=paciente,
-        Fecha_primera_consulta=request.POST["fecha"],
-        hora_consulta=request.POST["hora"],
-        modalidad=request.POST["modalidad"],
-        tipo_consulta=request.POST["tipo-consulta"],
-        notas=request.POST["notas"],
-    )
-
-    if "familiares" in request.POST:
-        for familiar in request.POST["familiares"]:
-            cita.acompañantes.add(familiar)
-    messages.success(request, "cita agendada", "felicidades")
-    return redirect("perfil")
-
-
-def perfil(request: HttpRequest):
-
-    paciente = Paciente.objects.get(user=request.user)
-    user = request.user
-    familiares = paciente.familiares.all()
-
-    familiar_final = []
-    for familiar in familiares:
-        usuario_familiar = copy.deepcopy(familiar.user2)
-        familiar_final.append(
-            {
-                "paciente": Paciente.objects.get(user=usuario_familiar),
-                "relacion": familiar.relacion,
-            }
-        )
-    cita = Cita.objects.filter(paciente=paciente)
-
-    datos = {
-        "nombre": user.first_name,
-        "apellido": user.last_name,
-        "cedula": user.username,
-        "correo": user.email,
-        "lugarNacimiento": paciente.Lugar_de_nacimiento,
-        "nivelInstruccion": paciente.Instruccion_paciente,
-        "ocupacion": paciente.Ocupacion_paciente,
-        "telefono": paciente.Telefono_paciente,
-        "estadoCivil": paciente.Estado_civil_paciente,
-        "religion": paciente.Religion_paciente,
-        "centroTrabajo": paciente.Centros_estudios_trabajos,
-        "grado": paciente.Grado_paciente,
-        "ciclo": paciente.Ciclo_paciente,
-        "lugarResidencia": paciente.Lugar_residencia_paciente,
-        "sexo": paciente.sexo,
-        "tiempoResidencia": paciente.Cantidad_tiempo_residencia_paciente,
-        "tiempoResidenciaUnidad": paciente.Tiempo_residencia_paciente,
-        "familiares": familiar_final,
-        "fecha_actual": date.today(),
-        "citas": cita,
-    }
-    try:
-        datos["fechaNacimiento"] = paciente.Feche_de_nacimiento.strftime("%Y-%m-%d")
-    except:
-        pass
-    copia = copy.deepcopy(datos)
-    for key in copia.keys():
-        if datos[key] is None:
-            datos.pop(key)
-    return render(request, "panel-psicologa.html", datos)
-
-
 def iniciar_sesion(request: HttpRequest):
     if request.method == "POST":
-        user = authenticate(
-            request, password=request.POST["password"], username=request.POST["usuario"]
-        )
+        tipo_documento = request.POST.get("tipo_documento", "").strip()
+        cedula = request.POST.get("cedula", "").strip()
+        password = request.POST.get("password", "")
+
+        # Crear username combinado (tipo + número)
+        username = f"{tipo_documento}{cedula}"
+
+        user = authenticate(request, password=password, username=username)
         print(request.POST)
+        print(f"Username intentado: {username}")
         print(user)
         if user is not None:
             login(request, user)
-            return redirect("perfil")
-        messages.error(request, "contraseña invalida", "errror")
+            return redirect("paciente")
+        messages.error(request, "Credenciales inválidas", "error")
 
     return render(request, "login.html")
 
@@ -176,34 +50,335 @@ def iniciar_sesion(request: HttpRequest):
 def registro(request: HttpRequest):
     if request.method == "POST":
         print(request.POST)
-        existe = False
-        try:
-            user = User.objects.get(email=request.POST["correo"])
-            messages.error(request, "correo ya registrado cambialo", "errror")
-            existe = False
-        except User.DoesNotExist:
-            existe = True
 
+        # Validaciones
+        errores = []
+
+        # Validar que todos los campos requeridos estén presentes
+        campos_requeridos = [
+            "nombre",
+            "apellido",
+            "tipo_documento",
+            "cedula",
+            "correo",
+            "password",
+            "pregunta1",
+            "pregunta2",
+            "pregunta3",
+            "respuesta1",
+            "respuesta2",
+            "respuesta3",
+        ]
+
+        for campo in campos_requeridos:
+            if not request.POST.get(campo, "").strip():
+                errores.append(
+                    f"El campo {campo.replace('_', ' ').title()} es obligatorio"
+                )
+
+        # Validar tipo de documento
+        tipo_documento = request.POST.get("tipo_documento", "").strip()
+        if tipo_documento and tipo_documento not in ["V", "E", "J"]:
+            errores.append("El tipo de documento debe ser V, E o J")
+
+        # Validar formato de cédula (solo números)
+        cedula = request.POST.get("cedula", "").strip()
+        if cedula and not cedula.isdigit():
+            errores.append("El número de documento debe contener solo números")
+
+        # Validar formato de correo
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        correo = request.POST.get("correo", "").strip()
+        if correo and not re.match(email_pattern, correo):
+            errores.append("El formato del correo electrónico no es válido")
+
+        # Validar longitud de contraseña
+        password = request.POST.get("password", "")
+        if password and len(password) < 6:
+            errores.append("La contraseña debe tener al menos 6 caracteres")
+
+        # Obtener preguntas y respuestas de seguridad
+        pregunta1 = request.POST.get("pregunta1", "").strip()
+        pregunta2 = request.POST.get("pregunta2", "").strip()
+        pregunta3 = request.POST.get("pregunta3", "").strip()
+        respuesta1 = request.POST.get("respuesta1", "").strip()
+        respuesta2 = request.POST.get("respuesta2", "").strip()
+        respuesta3 = request.POST.get("respuesta3", "").strip()
+
+        # Validar que las preguntas no estén vacías
+        if not pregunta1 or not pregunta2 or not pregunta3:
+            errores.append("Debes seleccionar las tres preguntas de seguridad")
+
+        # Validar que las respuestas no estén vacías
+        if not respuesta1 or not respuesta2 or not respuesta3:
+            errores.append("Todas las respuestas de seguridad son obligatorias")
+
+        # Verificar si el correo ya existe
         try:
-            user = User.objects.get(username=request.POST["cedula"])
-            messages.error(request, "cedula ya registrada cambiala", "errror")
-            existe = False
+            user = User.objects.get(email=correo)
+            errores.append("Este correo ya está registrado")
         except User.DoesNotExist:
-            if existe:
-                existe = True
-        if existe:
-            user = User.objects.create_user(
-                request.POST["cedula"],
-                request.POST["correo"],
-                request.POST["password"],
-                first_name=request.POST["nombre"],
-                last_name=request.POST["apellido"],
+            pass
+
+        # Crear username combinado para validación
+        username = f"{tipo_documento}{cedula}"
+
+        # Verificar si el username ya existe
+        try:
+            user = User.objects.get(username=username)
+            errores.append(
+                f"Ya existe un usuario con documento {tipo_documento}-{cedula}"
             )
-            Paciente.objects.create(user=user)
+        except User.DoesNotExist:
+            pass
+
+        # Verificar si el documento ya existe (tipo + número) pero solo si está activo
+        try:
+            paciente_existente = Pacientes.objects.get(
+                tipo_documento=tipo_documento, n_documento=cedula
+            )
+            # Solo mostrar error si el paciente está activo
+            if paciente_existente.status == "activo":
+                errores.append(
+                    f"Ya existe un usuario activo con documento {tipo_documento}-{cedula}"
+                )
+        except Pacientes.DoesNotExist:
+            pass
+
+        # Si hay errores, mostrarlos y no continuar
+        if errores:
+            for error in errores:
+                messages.error(request, error, "error")
+            return render(request, "registro.html")
+
+        # Si no hay errores, crear o actualizar el usuario
+        try:
+            # Verificar si existe un paciente inactivo con el mismo documento
+            paciente_inactivo = None
+            try:
+                paciente_inactivo = Pacientes.objects.get(
+                    tipo_documento=tipo_documento, n_documento=cedula, status="inactivo"
+                )
+            except Pacientes.DoesNotExist:
+                pass
+
+            if paciente_inactivo:
+                # Actualizar paciente inactivo existente
+                user = paciente_inactivo.user
+
+                # Crear username combinado
+                username = f"{tipo_documento}{cedula}"
+
+                # Actualizar datos del usuario
+                user.username = username
+                user.first_name = request.POST["nombre"]
+                user.last_name = request.POST["apellido"]
+                user.email = correo
+                user.set_password(password)
+                user.save()
+
+                # Obtener segundo nombre y segundo apellido si existen
+                segundo_nombre = request.POST.get("segundo_nombre", "").strip()
+                segundo_apellido = request.POST.get("segundo_apellido", "").strip()
+
+                # Actualizar datos del paciente
+                paciente_inactivo.primer_nombre = request.POST["nombre"]
+                paciente_inactivo.segundo_nombre = segundo_nombre
+                paciente_inactivo.primer_apellido = request.POST["apellido"]
+                paciente_inactivo.segundo_apellido = segundo_apellido
+                paciente_inactivo.pregunta_1 = pregunta1
+                paciente_inactivo.pregunta_2 = pregunta2
+                paciente_inactivo.pregunta_3 = pregunta3
+                paciente_inactivo.respuesta_1 = respuesta1
+                paciente_inactivo.respuesta_2 = respuesta2
+                paciente_inactivo.respuesta_3 = respuesta3
+                paciente_inactivo.status = "activo"
+                paciente_inactivo.save()
+
+                messages.success(request, "Cuenta reactivada exitosamente", "success")
+
+            else:
+                # Crear username combinado
+                username = f"{tipo_documento}{cedula}"
+
+                # Crear nuevo usuario y paciente
+                user = User.objects.create_user(
+                    username=username,
+                    email=correo,
+                    password=password,
+                    first_name=request.POST["nombre"],
+                    last_name=request.POST["apellido"],
+                )
+
+                # Crear el paciente con todos los datos
+                paciente = Pacientes.objects.create(
+                    user=user,
+                    primer_nombre=request.POST["nombre"],
+                    segundo_nombre=request.POST.get("segundo_nombre", "").strip(),
+                    primer_apellido=request.POST["apellido"],
+                    segundo_apellido=request.POST.get("segundo_apellido", "").strip(),
+                    tipo_documento=tipo_documento,  # Guardar el tipo de documento
+                    n_documento=cedula,  # Guardar el número de documento
+                    pregunta_1=pregunta1,
+                    pregunta_2=pregunta2,
+                    pregunta_3=pregunta3,
+                    respuesta_1=respuesta1,
+                    respuesta_2=respuesta2,
+                    respuesta_3=respuesta3,
+                    status="activo",  # Establecer estado activo por defecto
+                )
+
+                messages.success(request, "Registro exitoso", "success")
+
             login(request, user)
-            return redirect("perfil")
+            return redirect("paciente")
+
+        except Exception as e:
+            messages.error(
+                request, f"Error al crear/actualizar el usuario: {str(e)}", "error"
+            )
+            return render(request, "registro.html")
+
     return render(request, "registro.html")
 
 
 def recuperar(request: HttpRequest):
-    return render(request, "recuperar.html")
+    if request.method == "POST":
+        if "cedula" in request.POST:
+            # Paso 1: Verificar que la cédula existe
+            tipo_documento = request.POST.get("tipo_documento", "").strip()
+            cedula = request.POST.get("cedula", "").strip()
+            username = f"{tipo_documento}{cedula}"
+
+            try:
+                user = User.objects.get(username=username)
+                paciente = Pacientes.objects.get(user=user)
+                # Guardar el usuario en la sesión para el siguiente paso
+                request.session["recuperar_user_id"] = user.id
+                return render(
+                    request,
+                    "recuperar.html",
+                    {"step": "preguntas", "paciente": paciente},
+                )
+            except (User.DoesNotExist, Pacientes.DoesNotExist):
+                messages.error(request, "Documento no encontrado", "error")
+                return render(request, "recuperar.html", {"step": "cedula"})
+
+        elif (
+            "respuesta1" in request.POST
+            and "respuesta2" in request.POST
+            and "respuesta3" in request.POST
+        ):
+            # Paso 2: Verificar las respuestas de seguridad
+            user_id = request.session.get("recuperar_user_id")
+            if not user_id:
+                messages.error(request, "Sesión expirada, intenta nuevamente", "error")
+                return render(request, "recuperar.html", {"step": "cedula"})
+
+            try:
+                user = User.objects.get(id=user_id)
+                paciente = Pacientes.objects.get(user=user)
+
+                # Verificar las respuestas
+                if (
+                    paciente.respuesta_1.lower().strip()
+                    == request.POST["respuesta1"].lower().strip()
+                    and paciente.respuesta_2.lower().strip()
+                    == request.POST["respuesta2"].lower().strip()
+                    and paciente.respuesta_3.lower().strip()
+                    == request.POST["respuesta3"].lower().strip()
+                ):
+
+                    # Respuestas correctas, mostrar formulario de nueva contraseña
+                    return render(
+                        request,
+                        "recuperar.html",
+                        {"step": "nueva_password", "user_id": user_id},
+                    )
+                else:
+                    messages.error(request, "Respuestas incorrectas", "error")
+                    return render(
+                        request,
+                        "recuperar.html",
+                        {"step": "preguntas", "paciente": paciente},
+                    )
+            except (User.DoesNotExist, Pacientes.DoesNotExist):
+                messages.error(request, "Usuario no encontrado", "error")
+                return render(request, "recuperar.html", {"step": "cedula"})
+
+        elif "nueva_password" in request.POST:
+            # Paso 3: Cambiar la contraseña
+            user_id = request.session.get("recuperar_user_id")
+            if not user_id:
+                messages.error(request, "Sesión expirada, intenta nuevamente", "error")
+                return render(request, "recuperar.html", {"step": "cedula"})
+
+            nueva_password = request.POST["nueva_password"]
+            confirmar_password = request.POST.get("confirmar_password", "")
+
+            # Validar que las contraseñas coincidan
+            if nueva_password != confirmar_password:
+                messages.error(request, "Las contraseñas no coinciden", "error")
+                return render(
+                    request,
+                    "recuperar.html",
+                    {"step": "nueva_password", "user_id": user_id},
+                )
+
+            # Validar longitud mínima
+            if len(nueva_password) < 6:
+                messages.error(
+                    request, "La contraseña debe tener al menos 6 caracteres", "error"
+                )
+                return render(
+                    request,
+                    "recuperar.html",
+                    {"step": "nueva_password", "user_id": user_id},
+                )
+
+            try:
+                user = User.objects.get(id=user_id)
+                user.set_password(nueva_password)
+                user.save()
+
+                # Limpiar la sesión
+                if "recuperar_user_id" in request.session:
+                    del request.session["recuperar_user_id"]
+
+                messages.success(request, "Contraseña cambiada exitosamente", "success")
+                return redirect("login")
+            except User.DoesNotExist:
+                messages.error(request, "Usuario no encontrado", "error")
+                return render(request, "recuperar.html", {"step": "cedula"})
+
+    # GET request - mostrar formulario inicial
+    return render(request, "recuperar.html", {"step": "cedula"})
+
+
+def paciente(request: HttpRequest):
+    paciente = Pacientes.objects.filter(user=request.user).first()
+    if not paciente:
+        # Si no hay paciente, crear uno o manejar el error
+        messages.error(
+            request, "No se encontró el paciente asociado al usuario", "error"
+        )
+        return redirect("login")
+    return render(request, "panel-psicologa.html", {"pacienteid": paciente.id})
+
+
+def psicologa(request: HttpRequest):
+    pacienteid = request.user.id
+    return render(request, "panel-admin.html", {"pacienteid": pacienteid})
+
+
+def test_static(request: HttpRequest):
+    """Vista temporal para probar archivos estáticos"""
+    from django.conf import settings
+
+    debug_info = {
+        "STATIC_URL": settings.STATIC_URL,
+        "STATICFILES_DIRS": settings.STATICFILES_DIRS,
+        "DEBUG": settings.DEBUG,
+        "BASE_DIR": str(settings.BASE_DIR),
+    }
+    return render(request, "test_static.html", {"debug": debug_info})
